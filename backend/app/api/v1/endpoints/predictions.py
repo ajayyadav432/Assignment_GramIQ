@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.base import AIProvider
 from app.core.config import get_settings
-from app.core.dependencies import get_ai_provider, get_db, get_storage_provider
+from app.core.dependencies import get_ai_provider, get_ai_provider_by_name, get_db, get_storage_provider
 from app.schemas.prediction import (
     PredictionListItem,
     PredictionListResponse,
@@ -84,6 +84,7 @@ async def create_prediction(
     image: UploadFile = File(..., description="Crop image (JPEG, PNG, or WebP)"),
     crop_type: str = Form(..., description="Type of crop (e.g., Wheat, Rice, Tomato)"),
     farmer_notes: str = Form(None, description="Optional observations from the farmer"),
+    ai_provider_name: str = Form(None, description="Optional AI provider override: mock, gemini, groq, openai"),
     db: AsyncSession = Depends(get_db),
     ai_provider: AIProvider = Depends(get_ai_provider),
     storage: StorageProvider = Depends(get_storage_provider),
@@ -93,7 +94,12 @@ async def create_prediction(
 
     Flow: validate → save image → AI analysis → persist → return result.
     The AI provider and storage backend are injected via dependency injection.
+    An optional ai_provider_name form field allows per-request provider override.
     """
+    # Allow per-request provider override from the frontend model selector
+    if ai_provider_name and ai_provider_name.strip():
+        ai_provider = get_ai_provider_by_name(ai_provider_name.strip().lower())
+
     # Read and validate the uploaded file
     content = await image.read()
     _validate_image(image, content)
