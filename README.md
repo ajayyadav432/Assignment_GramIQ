@@ -15,17 +15,17 @@ Krishi Clinic Lite is a streamlined crop disease advisory pipeline that enables 
 └─────────────┘      └─────────────┘      └─────────────┘
                             │
                             ▼
-                     ┌─────────────┐
-                     │ AI Provider │
-                     │ (Interface) │
-                     └─────────────┘
+                      ┌─────────────┐
+                      │ AI Provider │
+                      │ (Interface) │
+                      └─────────────┘
                             │
-              ┌─────────────┼─────────────┐
-              ▼             ▼             ▼
-         ┌─────────┐  ┌─────────┐  ┌─────────┐
-         │ Gemini  │  │  Mock   │  │ OpenAI  │
-         │Provider │  │Provider │  │Provider │
-         └─────────┘  └─────────┘  └─────────┘
+         ┌──────────────────┼──────────────────┐
+         ▼                  ▼                  ▼
+   ┌───────────┐      ┌───────────┐      ┌───────────┐
+   │  Gemini   │      │   Groq    │      │   Mock    │
+   │ Provider  │      │ Provider  │      │ Provider  │
+   └───────────┘      └───────────┘      └───────────┘
 ```
 
 ## Tech Stack
@@ -35,7 +35,7 @@ Krishi Clinic Lite is a streamlined crop disease advisory pipeline that enables 
 | **Frontend** | Next.js 14 (TypeScript) + Tailwind CSS | App Router, SSR/CSR flexibility, type safety |
 | **Backend** | FastAPI (Python 3.12) | Async-first, Pydantic V2 validation, auto OpenAPI docs |
 | **Database** | PostgreSQL 15 + SQLAlchemy 2.0 + Alembic | ACID compliance, async via asyncpg, version-controlled migrations |
-| **AI** | Google Gemini / OpenAI / Mock Provider | 3 swappable implementations via ABC + dependency injection |
+| **AI** | Google Gemini / Groq / OpenAI / Mock | 4 swappable implementations via ABC + dependency injection |
 | **DevOps** | Docker Compose + GitHub Actions | Single-command deployment, automated CI pipeline |
 | **Charts** | Recharts | Declarative React charts, SSR-safe via dynamic imports |
 
@@ -54,7 +54,7 @@ cd krishi-clinic-lite
 
 # 2. Configure environment
 cp .env.example .env
-# Edit .env to set GEMINI_API_KEY if using real AI provider
+# Edit .env to set GEMINI_API_KEY or GROQ_API_KEY
 
 # 3. Launch the entire stack
 docker compose up --build
@@ -76,6 +76,18 @@ The application ships with `AI_PROVIDER=mock` by default, which requires **no AP
 AI_PROVIDER=gemini
 GEMINI_API_KEY=your_actual_api_key
 ```
+
+### Using Groq (Recommended for real AI testing)
+
+```bash
+# In your .env file:
+AI_PROVIDER=groq
+GROQ_API_KEY=your_groq_api_key
+```
+
+### Per-Request Model Override
+
+The frontend features an **AI Model** dropdown selector. This allows you to explicitly route any individual prediction request to **Gemini, Groq, or Mock** at runtime, demonstrating the live swappable architecture.
 
 ## API Endpoints
 
