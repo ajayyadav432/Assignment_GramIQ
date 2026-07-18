@@ -15,6 +15,7 @@ from app.core.database import async_session_factory
 from app.ai.base import AIProvider
 from app.ai.mock_provider import MockProvider
 from app.ai.gemini_provider import GeminiProvider
+from app.ai.groq_provider import GroqProvider
 from app.ai.openai_provider import OpenAIProvider
 from app.ai.fallback_provider import FallbackAIProvider
 from app.storage.base import StorageProvider
@@ -36,14 +37,14 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-def get_ai_provider() -> AIProvider:
+def _build_provider(provider_name: str) -> AIProvider:
     """
-    Factory for AI providers — reads AI_PROVIDER from env
-    and returns the appropriate concrete implementation.
+    Build an AI provider instance by name.
 
-    Supports three providers with automatic mock fallback:
+    Supports four providers with automatic mock fallback:
       - mock: Deterministic responses, no API key needed
       - gemini: Google Gemini (falls back to mock if API key is missing or calls fail)
+      - groq: Groq LLM (falls back to mock if API key is missing or calls fail)
       - openai: OpenAI GPT-4 Vision (falls back to mock if API key is missing or calls fail)
 
     Switching providers requires only changing the AI_PROVIDER
@@ -51,7 +52,7 @@ def get_ai_provider() -> AIProvider:
     """
     settings = get_settings()
 
-    if settings.AI_PROVIDER == "gemini":
+    if provider_name == "gemini":
         if not settings.GEMINI_API_KEY:
             logger.warning(
                 "GEMINI_API_KEY is not set but AI_PROVIDER=gemini. Falling back to MockProvider."
@@ -63,7 +64,19 @@ def get_ai_provider() -> AIProvider:
         )
         return FallbackAIProvider(primary, MockProvider())
 
-    if settings.AI_PROVIDER == "openai":
+    if provider_name == "groq":
+        if not settings.GROQ_API_KEY:
+            logger.warning(
+                "GROQ_API_KEY is not set but AI_PROVIDER=groq. Falling back to MockProvider."
+            )
+            return MockProvider()
+        primary = GroqProvider(
+            api_key=settings.GROQ_API_KEY,
+            model=settings.GROQ_MODEL,
+        )
+        return FallbackAIProvider(primary, MockProvider())
+
+    if provider_name == "openai":
         if not settings.OPENAI_API_KEY:
             logger.warning(
                 "OPENAI_API_KEY is not set but AI_PROVIDER=openai. Falling back to MockProvider."
@@ -77,6 +90,26 @@ def get_ai_provider() -> AIProvider:
 
     # Default to mock — safe for development and CI
     return MockProvider()
+
+
+def get_ai_provider() -> AIProvider:
+    """
+    Default AI provider factory — reads AI_PROVIDER from env config.
+    """
+    settings = get_settings()
+    return _build_provider(settings.AI_PROVIDER)
+
+
+def get_ai_provider_by_name(provider_name: str) -> AIProvider:
+    """
+    Build a specific AI provider by name.
+    Used when the frontend sends a per-request provider override.
+    """
+    valid = {"mock", "gemini", "groq", "openai"}
+    if provider_name not in valid:
+        logger.warning(f"Unknown AI provider '{provider_name}', falling back to default.")
+        return get_ai_provider()
+    return _build_provider(provider_name)
 
 
 def get_storage_provider() -> StorageProvider:
