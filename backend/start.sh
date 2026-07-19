@@ -5,22 +5,24 @@ export PYTHONPATH=/app
 
 echo "==> Waiting for PostgreSQL to be ready..."
 
-# Simple wait loop using Python's asyncpg
+if [ -n "$DATABASE_URL" ]; then
+    # Strip +asyncpg prefix for asyncpg python check
+    DB_CONN_URL=$(echo "$DATABASE_URL" | sed 's/postgresql+asyncpg/postgresql/')
+else
+    DB_CONN_URL="postgresql://postgres:postgres@db:5432/krishiclinic"
+fi
+
 for i in $(seq 1 30); do
     if python -c "
-import sys
-try:
-    import asyncio, asyncpg
-    async def check():
-        conn = await asyncpg.connect(
-            user='postgres', password='postgres',
-            host='db', port=5432, database='krishiclinic'
-        )
+import sys, asyncio, asyncpg
+async def check():
+    try:
+        conn = await asyncpg.connect('$DB_CONN_URL')
         await conn.close()
-    asyncio.run(check())
-    sys.exit(0)
-except Exception:
-    sys.exit(1)
+        sys.exit(0)
+    except Exception:
+        sys.exit(1)
+asyncio.run(check())
 " 2>/dev/null; then
         echo "==> PostgreSQL is ready!"
         break
@@ -36,4 +38,4 @@ echo "==> Seeding database..."
 python -m app.db.seed || echo "    Seeding skipped or already done."
 
 echo "==> Starting Uvicorn server..."
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000
