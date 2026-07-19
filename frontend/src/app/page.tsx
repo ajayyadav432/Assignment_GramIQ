@@ -140,6 +140,7 @@ export default function HomePage() {
     <div className="page-container" style={{ maxWidth: "1200px", margin: "0 auto", padding: "1rem" }}>
       {/* Top Banner & Tab Navigation */}
       <div
+        className="banner-header"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -204,7 +205,7 @@ export default function HomePage() {
       </div>
 
       {activeTab === "feed" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "2rem" }}>
+        <div className="feed-grid" style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "2rem" }}>
           
           {/* Main Feed Column */}
           <div>
@@ -253,6 +254,7 @@ export default function HomePage() {
 
             {/* Filter controls */}
             <div
+            className="filter-bar"
               style={{
                 background: "var(--color-bg-card)",
                 padding: "1rem",
@@ -404,7 +406,7 @@ export default function HomePage() {
           </div>
 
           {/* Sidebar Column */}
-          <div>
+          <div className="sidebar-hide-mobile">
             <div
               style={{
                 position: "sticky",
@@ -484,7 +486,7 @@ export default function HomePage() {
             </div>
 
             {/* Export Buttons */}
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="admin-export-btns" style={{ display: "flex", gap: "0.5rem" }}>
               <button
                 disabled={exportLoading}
                 onClick={() => handleExport("csv")}
@@ -576,7 +578,7 @@ export default function HomePage() {
               <div className="spinner" style={{ margin: "0 auto" }} />
             </div>
           ) : (
-            <div style={{ overflowX: "auto" }}>
+            <div className="table-scroll-mobile" style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8125rem", textAlign: "left" }}>
                 <thead>
                   <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
@@ -662,6 +664,7 @@ export default function HomePage() {
       {/* Upload Query Modal */}
       {showUploadModal && (
         <div
+          className="upload-modal-overlay"
           style={{
             position: "fixed",
             top: 0,
@@ -678,6 +681,7 @@ export default function HomePage() {
           onClick={() => setShowUploadModal(false)}
         >
           <div
+            className="upload-modal-inner"
             style={{
               background: "var(--color-bg-card)",
               padding: "2rem",
@@ -827,7 +831,7 @@ function PostCard({ post, userRole }: { post: any; userRole: string }) {
       </div>
 
       {/* Main Grid: Info + Image */}
-      <div style={{ display: "grid", gridTemplateColumns: post.image_filename ? "1fr 180px" : "1fr", gap: "1.5rem", marginBottom: "1rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: post.image_filename ? "1fr min(180px, 40%)" : "1fr", gap: "1rem", marginBottom: "1rem" }}>
         
         {/* Info Column */}
         <div>
@@ -915,9 +919,10 @@ function PostCard({ post, userRole }: { post: any; userRole: string }) {
 
       {/* Action Footer Bar */}
       <div
+        className="post-action-row"
         style={{
           display: "flex",
-          gap: "1rem",
+          gap: "0.5rem",
           alignItems: "center",
           borderTop: "1px solid var(--color-border-light)",
           paddingTop: "0.75rem",

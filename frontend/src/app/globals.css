@@ -440,14 +440,147 @@ body {
 /* ─── Responsive Breakpoints ────────────────────── */
 @media (max-width: 768px) {
   .page-container {
-    padding: 1.25rem 1rem;
+    padding: 1rem 0.75rem;
   }
-  
+
   .page-title {
-    font-size: 1.375rem;
+    font-size: 1.25rem;
   }
-  
+
   .stat-value {
     font-size: 1.5rem;
+  }
+
+  /* Navbar: stack on mobile */
+  .nav-mobile-wrap {
+    flex-wrap: wrap;
+    height: auto !important;
+    padding: 0.5rem 1rem !important;
+    gap: 0.5rem;
+  }
+
+  .nav-links-mobile {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex !important;
+    padding-bottom: 0.25rem;
+  }
+
+  /* Feed: stack grid to single column */
+  .feed-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Sidebar: hide on mobile */
+  .sidebar-hide-mobile {
+    display: none !important;
+  }
+
+  /* Create post bar: stack vertically */
+  .create-post-bar {
+    flex-wrap: wrap !important;
+  }
+
+  .create-post-bar input {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Upload modal: full screen on mobile */
+  .upload-modal-inner {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 1.25rem !important;
+  }
+
+  .upload-modal-overlay {
+    align-items: flex-end !important;
+  }
+
+  /* Admin export buttons: wrap */
+  .admin-export-btns {
+    flex-wrap: wrap !important;
+  }
+
+  /* Post card action row */
+  .post-action-row {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Breadcrumb row in detail page */
+  .breadcrumb-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Prediction detail cards grid */
+  .results-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tab bar: scroll horizontally */
+  .tab-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Banner header: stack */
+  .banner-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  /* Filter bar: vertical stack on mobile */
+  .filter-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .filter-bar input,
+  .filter-bar select,
+  .filter-bar button {
+    width: 100%;
+  }
+
+  /* Table overflow */
+  .table-scroll-mobile {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-md);
+  }
+
+  /* Dropzone: compact on mobile */
+  .dropzone {
+    padding: 2rem 1rem;
+  }
+
+  /* Admin panel: reduce padding */
+  .admin-panel {
+    padding: 1rem !important;
+  }
+
+  /* Auth card: full width */
+  .auth-card {
+    margin: 0.5rem !important;
+    padding: 1.5rem !important;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+  .page-container {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
   }
 }

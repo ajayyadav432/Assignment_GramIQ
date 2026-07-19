@@ -155,7 +155,7 @@ export default function PredictionDetailPage() {
     <div className="page-container">
       <div style={{ maxWidth: "800px", margin: "0 auto" }}>
         {/* Breadcrumb */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+        <div className="breadcrumb-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
           <Link href="/history" style={{ color: "var(--color-primary)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 500 }}>
             ← {t("Back to History")}
           </Link>
@@ -246,7 +246,7 @@ export default function PredictionDetailPage() {
           )}
 
           {/* Results Grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+          <div className="results-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
             {/* Confidence */}
             <div className="card" style={{ padding: "1.25rem" }}>
               <ConfidenceBar confidence={prediction.confidence} t={t} />
