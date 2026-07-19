@@ -17,6 +17,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from app.core.config import get_settings
 from app.core.database import Base
 from app.models.prediction import Prediction
+from app.models.user import User
+from app.core.security import get_password_hash
 
 logger = logging.getLogger(__name__)
 
@@ -327,14 +329,10 @@ SEED_DATA = [
 
 async def seed_database():
     """
-    Insert seed records into the predictions table.
-
-    Uses bulk insert for efficiency. Checks if data already exists
-    to prevent duplicate seeding on container restarts.
+    Insert seed records into the predictions table and create default users.
     """
     settings = get_settings()
     db_url = settings.DATABASE_URL.strip()
-    # Auto-upgrade dialect to asyncpg if standard postgres or postgresql is provided
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
     elif db_url.startswith("postgresql://"):
@@ -356,21 +354,73 @@ async def seed_database():
     session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with session_factory() as session:
-        # Check if data already exists
+        # 1. Create or get default users
+        # Farmer
+        result = await session.execute(select(User).where(User.username == "farmer"))
+        farmer = result.scalar_one_or_none()
+        if not farmer:
+            farmer = User(
+                id=uuid.uuid4(),
+                username="farmer",
+                password_hash=get_password_hash("password123"),
+                role="FARMER"
+            )
+            session.add(farmer)
+            await session.commit()
+            await session.refresh(farmer)
+            logger.info("Created seed user: farmer (password: password123)")
+
+        # Agronomist
+        result = await session.execute(select(User).where(User.username == "agronomist"))
+        agronomist = result.scalar_one_or_none()
+        if not agronomist:
+            agronomist = User(
+                id=uuid.uuid4(),
+                username="agronomist",
+                password_hash=get_password_hash("password123"),
+                role="AGRONOMIST"
+            )
+            session.add(agronomist)
+            await session.commit()
+            await session.refresh(agronomist)
+            logger.info("Created seed user: agronomist (password: password123)")
+
+        # 2. Check if data already exists in predictions
         result = await session.execute(select(func.count(Prediction.id)))
         count = result.scalar() or 0
 
         if count >= 20:
-            logger.info(f"Database already has {count} records. Skipping seed.")
+            logger.info(f"Database already has {count} prediction records. Skipping seed.")
             return
 
         logger.info(f"Seeding database with {len(SEED_DATA)} records...")
 
-        # Bulk insert using SQLAlchemy Core for efficiency
-        await session.execute(insert(Prediction), SEED_DATA)
+        # Update SEED_DATA with farmer_id and status
+        prepared_data = []
+        for idx, item in enumerate(SEED_DATA):
+            data_copy = item.copy()
+            data_copy["farmer_id"] = farmer.id
+            # Make the last 3 predictions PENDING_REVIEW, the rest REVIEWED
+            if idx >= len(SEED_DATA) - 3:
+                data_copy["status"] = "PENDING_REVIEW"
+                data_copy["agronomist_id"] = None
+                data_copy["agronomist_review"] = None
+                data_copy["agronomist_predicted_disease"] = None
+                data_copy["agronomist_severity"] = None
+                data_copy["reviewed_at"] = None
+            else:
+                data_copy["status"] = "REVIEWED"
+                data_copy["agronomist_id"] = agronomist.id
+                data_copy["agronomist_review"] = "Looks correct. Seeding recommendation verified."
+                data_copy["agronomist_predicted_disease"] = data_copy["predicted_disease"]
+                data_copy["agronomist_severity"] = data_copy["severity"]
+                data_copy["reviewed_at"] = datetime.now(timezone.utc) - timedelta(days=1)
+            prepared_data.append(data_copy)
+
+        await session.execute(insert(Prediction), prepared_data)
         await session.commit()
 
-        logger.info(f"Successfully seeded {len(SEED_DATA)} prediction records.")
+        logger.info(f"Successfully seeded {len(SEED_DATA)} prediction records linked to users.")
 
     await engine.dispose()
 

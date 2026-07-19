@@ -15,10 +15,10 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import func, select, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.ai.base import AIProvider
 from app.models.prediction import Prediction
 from app.storage.base import StorageProvider
+from app.ai.embedding import generate_embedding, cosine_similarity
 
 logger = logging.getLogger(__name__)
 
@@ -46,32 +46,64 @@ class PredictionService:
         image_bytes: bytes,
         image_filename: str,
         crop_type: str,
+        farmer_id: uuid.UUID,
         farmer_notes: str | None = None,
     ) -> Prediction:
         """
-        Full prediction pipeline: store image → analyze → persist record.
-
-        Args:
-            image_bytes: Raw uploaded image content.
-            image_filename: Original filename from the upload.
-            crop_type: Type of crop being analyzed.
-            farmer_notes: Optional farmer observations.
-
-        Returns:
-            The persisted Prediction ORM object.
+        Full prediction pipeline: store image → RAG retrieval → analyze → persist record.
         """
         # 1. Save image to storage
         stored_filename = await self._storage.save(image_filename, image_bytes)
         logger.info(f"Image saved: {stored_filename}")
 
-        # 2. Run AI analysis
-        ai_result = await self._ai.analyze(image_bytes, crop_type, farmer_notes)
+        # 2. Generate embedding for notes & crop type
+        embedding = None
+        rag_context = ""
+        try:
+            embedding_text = f"{crop_type}: {farmer_notes or ''}"
+            embedding = await generate_embedding(embedding_text)
+
+            # RAG: Find similar reviewed predictions for the same crop type
+            result = await self._db.execute(
+                select(Prediction)
+                .where(Prediction.status == "REVIEWED")
+                .where(Prediction.crop_type == crop_type)
+                .where(Prediction.notes_embedding.isnot(None))
+            )
+            candidates = result.scalars().all()
+
+            scored = []
+            for cand in candidates:
+                if cand.notes_embedding:
+                    sim = cosine_similarity(embedding, cand.notes_embedding)
+                    scored.append((sim, cand))
+
+            # Sort by similarity descending
+            scored.sort(key=lambda x: x[0], reverse=True)
+            top_similar = scored[:2]
+
+            if top_similar:
+                rag_context = "\n\n=== BIOBANK HISTORICAL CASES (Agronomist Verified) ===\n"
+                for idx, (sim, cand) in enumerate(top_similar):
+                    rag_context += f"Case {idx+1} (Similarity: {sim:.2f}):\n"
+                    rag_context += f"- Farmer Observations: {cand.farmer_notes or 'None'}\n"
+                    rag_context += f"- Verified Diagnosis: {cand.agronomist_predicted_disease or cand.predicted_disease}\n"
+                    rag_context += f"- Verified Treatment/Advisory: {cand.agronomist_review or cand.recommendation}\n\n"
+                logger.info(f"RAG found {len(top_similar)} similar cases. Injected as context.")
+        except Exception as e:
+            logger.warning(f"RAG or embedding generation failed: {e}", exc_info=True)
+
+        # Append RAG context to notes sent to AI
+        ai_notes = (farmer_notes or "") + rag_context
+
+        # 3. Run AI analysis
+        ai_result = await self._ai.analyze(image_bytes, crop_type, ai_notes)
         logger.info(
             f"AI prediction: {ai_result.predicted_disease} "
             f"(confidence={ai_result.confidence}, provider={self._ai.provider_name})"
         )
 
-        # 3. Persist prediction record
+        # 4. Persist prediction record
         prediction = Prediction(
             id=uuid.uuid4(),
             crop_type=crop_type,
@@ -82,6 +114,9 @@ class PredictionService:
             severity=ai_result.severity,
             recommendation=ai_result.recommendation,
             ai_provider=self._ai.provider_name,
+            farmer_id=farmer_id,
+            status="PENDING_REVIEW",
+            notes_embedding=embedding,
         )
 
         self._db.add(prediction)
@@ -103,23 +138,22 @@ class PredictionService:
         limit: int = 10,
         crop_type: str | None = None,
         disease: str | None = None,
+        farmer_id: uuid.UUID | None = None,
+        status: str | None = None,
     ) -> tuple[list[Prediction], int]:
         """
         Return paginated predictions with optional filtering.
-
-        Args:
-            page: Page number (1-indexed).
-            limit: Items per page.
-            crop_type: Optional filter by crop type.
-            disease: Optional filter by disease name.
-
-        Returns:
-            Tuple of (predictions list, total count).
         """
         query = select(Prediction)
         count_query = select(func.count(Prediction.id))
 
         # Apply filters
+        if farmer_id:
+            query = query.where(Prediction.farmer_id == farmer_id)
+            count_query = count_query.where(Prediction.farmer_id == farmer_id)
+        if status:
+            query = query.where(Prediction.status == status)
+            count_query = count_query.where(Prediction.status == status)
         if crop_type:
             query = query.where(Prediction.crop_type.ilike(f"%{crop_type}%"))
             count_query = count_query.where(

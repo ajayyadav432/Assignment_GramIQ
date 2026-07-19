@@ -1,23 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getPrediction, getImageUrl } from "@/lib/api";
 import type { Prediction } from "@/lib/types";
+import { useApp } from "@/context/AppContext";
+import AuthPage from "@/components/AuthPage";
 
-function SeverityBadge({ severity }: { severity: string | null }) {
+function SeverityBadge({ severity, t }: { severity: string | null; t: any }) {
   if (!severity) return null;
+  const translated = t(severity);
   const cls =
     severity === "High"
       ? "badge-high"
       : severity === "Medium"
       ? "badge-medium"
       : "badge-low";
-  return <span className={`badge ${cls}`}>{severity}</span>;
+  return <span className={`badge ${cls}`}>{translated}</span>;
 }
 
-function ConfidenceBar({ confidence }: { confidence: number }) {
+function ConfidenceBar({ confidence, t }: { confidence: number; t: any }) {
   const percentage = Math.round(confidence * 100);
   const cls =
     confidence >= 0.85
@@ -30,7 +33,7 @@ function ConfidenceBar({ confidence }: { confidence: number }) {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.375rem" }}>
         <span style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>
-          Confidence
+          {t("Confidence")}
         </span>
         <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "var(--color-primary)" }}>
           {percentage}%
@@ -45,25 +48,63 @@ function ConfidenceBar({ confidence }: { confidence: number }) {
 
 export default function PredictionDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
+  const { user, isInitialized, t, translateDynamic, language } = useApp();
 
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Dynamically translated content states
+  const [transDisease, setTransDisease] = useState("");
+  const [transRecommendation, setTransRecommendation] = useState("");
+  const [transNotes, setTransNotes] = useState("");
+
   useEffect(() => {
     async function fetchPrediction() {
+      if (!user) return;
       try {
         const data = await getPrediction(id);
         setPrediction(data);
+        
+        // Translate dynamic values
+        const [d, r, n] = await Promise.all([
+          translateDynamic(data.predicted_disease),
+          translateDynamic(data.recommendation || ""),
+          translateDynamic(data.farmer_notes || ""),
+        ]);
+        setTransDisease(d);
+        setTransRecommendation(r);
+        setTransNotes(n);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load prediction.");
+        setError(err instanceof Error ? err.message : t("Failed to load prediction."));
       } finally {
         setLoading(false);
       }
     }
-    fetchPrediction();
-  }, [id]);
+    
+    if (user) {
+      fetchPrediction();
+    }
+  }, [id, user, language]); // Re-run translation when language changes!
+
+  if (!isInitialized) {
+    return (
+      <div className="page-container">
+        <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+          <div className="skeleton" style={{ height: "32px", width: "200px", marginBottom: "1.5rem" }} />
+          <div className="card" style={{ padding: "2rem" }}>
+            <div className="skeleton" style={{ height: "300px", marginBottom: "1.5rem", borderRadius: "var(--radius-md)" }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
 
   if (loading) {
     return (
@@ -86,10 +127,10 @@ export default function PredictionDetailPage() {
       <div className="page-container">
         <div className="empty-state">
           <div className="empty-state-icon">❌</div>
-          <h2 style={{ fontWeight: 600, marginBottom: "0.5rem" }}>Prediction Not Found</h2>
-          <p>{error || "The prediction you're looking for doesn't exist."}</p>
+          <h2 style={{ fontWeight: 600, marginBottom: "0.5rem" }}>{t("Prediction Not Found")}</h2>
+          <p>{error || t("The prediction you're looking for doesn't exist.")}</p>
           <Link href="/history" className="btn btn-primary" style={{ marginTop: "1rem" }}>
-            ← Back to History
+            ← {t("Back to History")}
           </Link>
         </div>
       </div>
@@ -104,24 +145,60 @@ export default function PredictionDetailPage() {
     minute: "2-digit",
   });
 
+  const isPending = prediction.status === "PENDING_REVIEW";
+
   return (
     <div className="page-container">
       <div style={{ maxWidth: "800px", margin: "0 auto" }}>
         {/* Breadcrumb */}
         <div style={{ marginBottom: "1.5rem" }}>
           <Link href="/history" style={{ color: "var(--color-primary)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 500 }}>
-            ← Back to History
+            ← {t("Back to History")}
           </Link>
         </div>
+
+        {/* Pending Review Warning Banner */}
+        {isPending && user.role !== "AGRONOMIST" && (
+          <div
+            style={{
+              background: "#fffbeb",
+              border: "1px solid #fef3c7",
+              color: "#b45309",
+              padding: "1rem 1.25rem",
+              borderRadius: "var(--radius-md)",
+              marginBottom: "1.5rem",
+              fontSize: "0.875rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+            }}
+          >
+            <span style={{ fontSize: "1.25rem" }}>⏳</span>
+            <div>
+              <strong>{t("Pending Review")}:</strong> {t("Our agronomist is currently reviewing this prediction. The diagnosis below is locked until verified.")}
+            </div>
+          </div>
+        )}
 
         {/* Header */}
         <div className="page-header">
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-            <h1 className="page-title">{prediction.predicted_disease}</h1>
-            <SeverityBadge severity={prediction.severity} />
+            <h1 className="page-title">{transDisease}</h1>
+            <SeverityBadge severity={prediction.severity} t={t} />
+            <span
+              className={`badge`}
+              style={{
+                background: isPending ? "#fef3c7" : "#dcfce7",
+                color: isPending ? "#b45309" : "#15803d",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+              }}
+            >
+              {isPending ? t("Pending Review") : t("Verified")}
+            </span>
           </div>
           <p className="page-subtitle">
-            {prediction.crop_type} · Analyzed on {formattedDate}
+            {t(prediction.crop_type)} · {t("Analyzed on")} {formattedDate}
           </p>
         </div>
 
@@ -149,46 +226,46 @@ export default function PredictionDetailPage() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
             {/* Confidence */}
             <div className="card" style={{ padding: "1.25rem" }}>
-              <ConfidenceBar confidence={prediction.confidence} />
+              <ConfidenceBar confidence={prediction.confidence} t={t} />
             </div>
 
             {/* Crop Type */}
             <div className="stat-card">
-              <div className="stat-label">Crop Type</div>
+              <div className="stat-label">{t("Crop Type")}</div>
               <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--color-text)", marginTop: "0.25rem" }}>
-                {prediction.crop_type}
+                {t(prediction.crop_type)}
               </div>
             </div>
 
             {/* AI Provider */}
             <div className="stat-card">
-              <div className="stat-label">AI Provider</div>
+              <div className="stat-label">{t("AI Provider")}</div>
               <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--color-text)", marginTop: "0.25rem", textTransform: "capitalize" }}>
-                {prediction.ai_provider}
+                {prediction.ai_provider === "Hidden" ? t("Pending Review") : t(prediction.ai_provider)}
               </div>
             </div>
           </div>
 
           {/* Recommendation */}
-          {prediction.recommendation && (
+          {(prediction.recommendation || transRecommendation) && (
             <div className="card" style={{ padding: "1.5rem" }}>
               <h3 style={{ fontWeight: 600, marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                💊 Treatment Recommendation
+                💊 {t("Treatment Recommendation")}
               </h3>
               <p style={{ color: "var(--color-text-secondary)", lineHeight: 1.7 }}>
-                {prediction.recommendation}
+                {transRecommendation}
               </p>
             </div>
           )}
 
           {/* Farmer Notes */}
-          {prediction.farmer_notes && (
+          {(prediction.farmer_notes || transNotes) && (
             <div className="card" style={{ padding: "1.5rem" }}>
               <h3 style={{ fontWeight: 600, marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                📝 Farmer Notes
+                📝 {t("Farmer Notes")}
               </h3>
               <p style={{ color: "var(--color-text-secondary)", lineHeight: 1.7, fontStyle: "italic" }}>
-                &ldquo;{prediction.farmer_notes}&rdquo;
+                &ldquo;{transNotes}&rdquo;
               </p>
             </div>
           )}

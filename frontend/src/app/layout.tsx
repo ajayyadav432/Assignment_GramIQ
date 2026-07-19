@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import { AppProvider } from "@/context/AppContext";
 
 export const metadata: Metadata = {
   title: "Krishi Clinic Lite — Crop Disease Advisory",
@@ -22,8 +23,10 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Navbar />
-        <main>{children}</main>
+        <AppProvider>
+          <Navbar />
+          <main>{children}</main>
+        </AppProvider>
       </body>
     </html>
   );

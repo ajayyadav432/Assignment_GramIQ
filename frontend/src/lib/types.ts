@@ -12,6 +12,7 @@ export interface Prediction {
   confidence: number;
   severity: string | null;
   recommendation: string | null;
+  status?: string;
   ai_provider: string;
   created_at: string;
 }
@@ -23,6 +24,7 @@ export interface PredictionListItem {
   predicted_disease: string;
   confidence: number;
   severity: string | null;
+  status?: string;
   ai_provider: string;
   created_at: string;
 }

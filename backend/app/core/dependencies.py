@@ -12,7 +12,7 @@ import logging
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Query, HTTPException, status
+from fastapi import Depends, Query, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from app.core.config import get_settings

@@ -11,6 +11,7 @@ import pytest
 import httpx
 
 import pytest_asyncio
+from fastapi import Depends
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.pool import StaticPool
@@ -18,7 +19,8 @@ from sqlalchemy.pool import StaticPool
 from app.main import app
 from app.core.database import Base
 from app.models.prediction import Prediction
-from app.core.dependencies import get_db, get_ai_provider, get_storage_provider
+from app.core.dependencies import get_db, get_ai_provider, get_storage_provider, get_current_user, get_current_farmer, get_current_agronomist
+from app.models.user import User
 from app.ai.mock_provider import MockProvider
 from app.storage.local_storage import LocalStorage
 
@@ -56,10 +58,58 @@ def override_get_storage_provider():
     return LocalStorage(upload_dir="test_uploads")
 
 
+async def override_get_current_user(db: AsyncSession = Depends(override_get_db)) -> User:
+    """Mock get_current_user in tests."""
+    # Find or create a test farmer user
+    import uuid
+    from sqlalchemy import select
+    result = await db.execute(select(User).where(User.username == "test_farmer"))
+    user = result.scalar_one_or_none()
+    if not user:
+        user = User(
+            id=uuid.uuid4(),
+            username="test_farmer",
+            password_hash="mock_hash",
+            role="FARMER"
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    return user
+
+
+async def override_get_current_farmer(current_user: User = Depends(override_get_current_user)) -> User:
+    """Mock get_current_farmer in tests."""
+    return current_user
+
+
+async def override_get_current_agronomist(db: AsyncSession = Depends(override_get_db)) -> User:
+    """Mock get_current_agronomist in tests."""
+    # Find or create a test agronomist user
+    import uuid
+    from sqlalchemy import select
+    result = await db.execute(select(User).where(User.username == "test_agronomist"))
+    user = result.scalar_one_or_none()
+    if not user:
+        user = User(
+            id=uuid.uuid4(),
+            username="test_agronomist",
+            password_hash="mock_hash",
+            role="AGRONOMIST"
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    return user
+
+
 # Override dependencies
 app.dependency_overrides[get_db] = override_get_db
 app.dependency_overrides[get_ai_provider] = override_get_ai_provider
 app.dependency_overrides[get_storage_provider] = override_get_storage_provider
+app.dependency_overrides[get_current_user] = override_get_current_user
+app.dependency_overrides[get_current_farmer] = override_get_current_farmer
+app.dependency_overrides[get_current_agronomist] = override_get_current_agronomist
 
 
 @pytest_asyncio.fixture(autouse=True)

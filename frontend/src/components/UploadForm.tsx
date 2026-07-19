@@ -4,9 +4,11 @@ import { useState, useRef, DragEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createPrediction } from "@/lib/api";
 import { CROP_TYPES, AI_PROVIDERS } from "@/lib/types";
+import { useApp } from "@/context/AppContext";
 
 export default function UploadForm() {
   const router = useRouter();
+  const { t } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -22,11 +24,11 @@ export default function UploadForm() {
     // Client-side validation
     const validTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!validTypes.includes(selectedFile.type)) {
-      setError("Please upload a JPEG, PNG, or WebP image.");
+      setError(t("Please upload a JPEG, PNG, or WebP image."));
       return;
     }
     if (selectedFile.size > 10 * 1024 * 1024) {
-      setError("File size must be under 10MB.");
+      setError(t("File size must be under 10MB."));
       return;
     }
 
@@ -80,7 +82,7 @@ export default function UploadForm() {
       router.push(`/predictions/${prediction.id}`);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Something went wrong. Please try again.";
+        err instanceof Error ? err.message : t("Something went wrong. Please try again.");
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -98,7 +100,7 @@ export default function UploadForm() {
       {/* File Upload Dropzone */}
       <div style={{ marginBottom: "1.5rem" }}>
         <label className="label">
-          Crop Image <span className="label-hint">(JPEG, PNG, or WebP — max 10MB)</span>
+          {t("Crop Image")} <span className="label-hint">(JPEG, PNG, or WebP — max 10MB)</span>
         </label>
 
         {!file ? (
@@ -111,10 +113,10 @@ export default function UploadForm() {
           >
             <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📷</div>
             <p style={{ fontWeight: 600, color: "var(--color-text)", marginBottom: "0.25rem" }}>
-              Drag and drop your crop image here
+              {t("Drag and drop your crop image here")}
             </p>
             <p style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>
-              or click to browse files
+              {t("or click to browse files")}
             </p>
           </div>
         ) : (
@@ -145,7 +147,7 @@ export default function UploadForm() {
                 className="btn btn-secondary"
                 style={{ padding: "0.375rem 0.75rem", fontSize: "0.8125rem" }}
               >
-                Remove
+                {t("Remove")}
               </button>
             </div>
           </div>
@@ -163,7 +165,7 @@ export default function UploadForm() {
       {/* Crop Type Selection */}
       <div style={{ marginBottom: "1.5rem" }}>
         <label className="label" htmlFor="crop-type">
-          Crop Type
+          {t("Crop Type")}
         </label>
         <select
           id="crop-type"
@@ -172,10 +174,10 @@ export default function UploadForm() {
           onChange={(e) => setCropType(e.target.value)}
           required
         >
-          <option value="">Select a crop type...</option>
+          <option value="">{t("Select a crop")}...</option>
           {CROP_TYPES.map((crop) => (
             <option key={crop} value={crop}>
-              {crop}
+              {t(crop)}
             </option>
           ))}
         </select>
@@ -184,7 +186,7 @@ export default function UploadForm() {
       {/* AI Model Selector */}
       <div style={{ marginBottom: "1.5rem" }}>
         <label className="label" htmlFor="ai-provider">
-          AI Model <span className="label-hint">(choose analysis engine)</span>
+          {t("AI Model")} <span className="label-hint">({t("choose analysis engine")})</span>
         </label>
         <select
           id="ai-provider"
@@ -194,7 +196,7 @@ export default function UploadForm() {
         >
           {AI_PROVIDERS.map((p) => (
             <option key={p.value} value={p.value}>
-              {p.label}
+              {t(p.label)}
             </option>
           ))}
         </select>
@@ -203,13 +205,13 @@ export default function UploadForm() {
       {/* Farmer Notes */}
       <div style={{ marginBottom: "1.5rem" }}>
         <label className="label" htmlFor="farmer-notes">
-          Farmer Notes <span className="label-hint">(optional)</span>
+          {t("Farmer Notes")} <span className="label-hint">({t("optional")})</span>
         </label>
         <textarea
           id="farmer-notes"
           className="textarea"
           rows={3}
-          placeholder="Describe what you observe — e.g., 'Yellow spots appearing on lower leaves after recent rain...'"
+          placeholder={t("Describe what you observe — e.g., 'Yellow spots appearing on lower leaves after recent rain...'")}
           value={farmerNotes}
           onChange={(e) => setFarmerNotes(e.target.value)}
           maxLength={1000}
@@ -267,10 +269,10 @@ export default function UploadForm() {
                 animation: "spin 0.8s linear infinite",
               }}
             />
-            Analyzing Crop...
+            {t("Analyzing...")}
           </>
         ) : (
-          <>🔬 Analyze Crop Disease</>
+          <>{t("🔬 Analyze Crop Disease")}</>
         )}
       </button>
 

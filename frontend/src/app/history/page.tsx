@@ -2,19 +2,23 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { listPredictions } from "@/lib/api";
 import type { PredictionListItem, PredictionListResponse } from "@/lib/types";
 import { CROP_TYPES } from "@/lib/types";
+import { useApp } from "@/context/AppContext";
+import AuthPage from "@/components/AuthPage";
 
-function SeverityBadge({ severity }: { severity: string | null }) {
+function SeverityBadge({ severity, t }: { severity: string | null; t: any }) {
   if (!severity) return <span style={{ color: "var(--color-text-muted)" }}>—</span>;
+  const translated = t(severity);
   const cls =
     severity === "High"
       ? "badge-high"
       : severity === "Medium"
       ? "badge-medium"
       : "badge-low";
-  return <span className={`badge ${cls}`}>{severity}</span>;
+  return <span className={`badge ${cls}`}>{translated}</span>;
 }
 
 function ConfidenceDisplay({ value }: { value: number }) {
@@ -27,6 +31,8 @@ function ConfidenceDisplay({ value }: { value: number }) {
 }
 
 export default function HistoryPage() {
+  const { user, isInitialized, t } = useApp();
+  const router = useRouter();
   const [data, setData] = useState<PredictionListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +44,7 @@ export default function HistoryPage() {
   const limit = 10;
 
   const fetchData = useCallback(async () => {
+    if (!user) return;
     setLoading(true);
     try {
       const result = await listPredictions({
@@ -48,36 +55,51 @@ export default function HistoryPage() {
       });
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load predictions.");
+      setError(err instanceof Error ? err.message : t("Failed to load predictions."));
     } finally {
       setLoading(false);
     }
-  }, [page, cropFilter, diseaseFilter]);
+  }, [page, cropFilter, diseaseFilter, user]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (user) {
+      fetchData();
+    }
+  }, [fetchData, user]);
+
+  if (!isInitialized) {
+    return (
+      <div className="page-container" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh" }}>
+        <div className="skeleton" style={{ height: "300px", width: "400px", borderRadius: "var(--radius-md)" }} />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
 
   const handleExportCSV = async () => {
     try {
-      // Fetch CSV content from the proxy API
       const params = new URLSearchParams();
       if (cropFilter) params.set("crop_type", cropFilter);
       if (diseaseFilter) params.set("disease", diseaseFilter);
       const qs = params.toString();
 
-      const res = await fetch(`/api/export/export.csv${qs ? `?${qs}` : ""}`);
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const token = localStorage.getItem("token");
+      
+      const res = await fetch(`${apiBase}/api/v1/predictions/export${qs ? `?${qs}` : ""}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      
       if (!res.ok) throw new Error("Export failed");
       const csvText = await res.text();
 
-      // Build filename
       const now = new Date();
       const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
       const filename = `krishi_predictions_${ts}.csv`;
 
-      // Use data: URI — this embeds the entire file content in the URL itself.
-      // Unlike blob: URLs, data: URIs respect the download attribute in ALL environments
-      // including sandboxed Cloud Workstations that rename blob downloads to UUIDs.
       const dataUri = "data:text/csv;charset=utf-8," + encodeURIComponent(csvText);
       const link = document.createElement("a");
       link.setAttribute("href", dataUri);
@@ -87,7 +109,7 @@ export default function HistoryPage() {
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Export failed.");
+      alert(err instanceof Error ? err.message : t("Export failed."));
     }
   };
 
@@ -98,9 +120,9 @@ export default function HistoryPage() {
       {/* Header */}
       <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
         <div>
-          <h1 className="page-title">📋 Prediction History</h1>
+          <h1 className="page-title">📋 {t("History")}</h1>
           <p className="page-subtitle">
-            Browse and filter past crop disease analyses.
+            {t("Browse and filter past crop disease analyses.")}
           </p>
         </div>
         {data && data.total > 0 && (
@@ -109,7 +131,7 @@ export default function HistoryPage() {
             className="btn btn-secondary"
             style={{ fontSize: "0.8125rem" }}
           >
-            📥 Export CSV
+            📥 {t("Export CSV")}
           </button>
         )}
       </div>
@@ -127,25 +149,25 @@ export default function HistoryPage() {
         }}
       >
         <div style={{ flex: "1 1 180px" }}>
-          <label className="label" style={{ fontSize: "0.75rem" }}>Crop Type</label>
+          <label className="label" style={{ fontSize: "0.75rem" }}>{t("Crop Type")}</label>
           <select
             className="select"
             value={cropFilter}
             onChange={(e) => { setCropFilter(e.target.value); setPage(1); }}
             style={{ padding: "0.5rem 0.75rem", fontSize: "0.8125rem" }}
           >
-            <option value="">All crops</option>
+            <option value="">{t("All crops")}</option>
             {CROP_TYPES.map((c) => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>{t(c)}</option>
             ))}
           </select>
         </div>
         <div style={{ flex: "1 1 180px" }}>
-          <label className="label" style={{ fontSize: "0.75rem" }}>Disease</label>
+          <label className="label" style={{ fontSize: "0.75rem" }}>{t("Disease")}</label>
           <input
             className="input"
             type="text"
-            placeholder="Filter by disease..."
+            placeholder={t("Filter by disease...")}
             value={diseaseFilter}
             onChange={(e) => { setDiseaseFilter(e.target.value); setPage(1); }}
             style={{ padding: "0.5rem 0.75rem", fontSize: "0.8125rem" }}
@@ -157,7 +179,7 @@ export default function HistoryPage() {
             onClick={() => { setCropFilter(""); setDiseaseFilter(""); setPage(1); }}
             style={{ padding: "0.5rem 1rem", fontSize: "0.8125rem" }}
           >
-            Clear Filters
+            {t("Clear Filters")}
           </button>
         )}
       </div>
@@ -190,7 +212,7 @@ export default function HistoryPage() {
           <div className="empty-state-icon">⚠️</div>
           <p>{error}</p>
           <button className="btn btn-primary" onClick={fetchData} style={{ marginTop: "1rem" }}>
-            Retry
+            {t("Retry")}
           </button>
         </div>
       )}
@@ -199,10 +221,10 @@ export default function HistoryPage() {
       {!loading && !error && data && data.items.length === 0 && (
         <div className="empty-state">
           <div className="empty-state-icon">🌿</div>
-          <h2 style={{ fontWeight: 600, marginBottom: "0.5rem" }}>No Predictions Yet</h2>
-          <p>Upload a crop image to get your first disease analysis.</p>
+          <h2 style={{ fontWeight: 600, marginBottom: "0.5rem" }}>{t("No predictions found.")}</h2>
+          <p>{t("Upload a crop image to get your first disease analysis.")}</p>
           <Link href="/" className="btn btn-primary" style={{ marginTop: "1rem" }}>
-            📤 Upload Image
+            📥 {t("Upload Image")}
           </Link>
         </div>
       )}
@@ -214,12 +236,13 @@ export default function HistoryPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Crop</th>
-                  <th>Disease</th>
-                  <th>Confidence</th>
-                  <th>Severity</th>
-                  <th>Provider</th>
+                  <th>{t("Date")}</th>
+                  <th>{t("Crop")}</th>
+                  <th>{t("Disease")}</th>
+                  <th>{t("Confidence")}</th>
+                  <th>{t("Severity")}</th>
+                  <th>{t("Status")}</th>
+                  <th>{t("Provider")}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -233,12 +256,25 @@ export default function HistoryPage() {
                         year: "numeric",
                       })}
                     </td>
-                    <td style={{ fontWeight: 600 }}>{item.crop_type}</td>
-                    <td>{item.predicted_disease}</td>
+                    <td style={{ fontWeight: 600 }}>{t(item.crop_type)}</td>
+                    <td>{t(item.predicted_disease)}</td>
                     <td><ConfidenceDisplay value={item.confidence} /></td>
-                    <td><SeverityBadge severity={item.severity} /></td>
+                    <td><SeverityBadge severity={item.severity} t={t} /></td>
+                    <td>
+                      <span
+                        className={`badge`}
+                        style={{
+                          background: item.status === "REVIEWED" ? "#dcfce7" : "#fef3c7",
+                          color: item.status === "REVIEWED" ? "#15803d" : "#b45309",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {item.status === "REVIEWED" ? t("Verified") : t("Pending Review")}
+                      </span>
+                    </td>
                     <td style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)", textTransform: "capitalize" }}>
-                      {item.ai_provider}
+                      {t(item.ai_provider)}
                     </td>
                     <td>
                       <Link
@@ -246,7 +282,7 @@ export default function HistoryPage() {
                         className="btn btn-secondary"
                         style={{ padding: "0.25rem 0.75rem", fontSize: "0.75rem" }}
                       >
-                        View →
+                        {t("View")} →
                       </Link>
                     </td>
                   </tr>
@@ -272,10 +308,10 @@ export default function HistoryPage() {
                 onClick={() => setPage((p) => p - 1)}
                 style={{ padding: "0.375rem 0.75rem", fontSize: "0.8125rem" }}
               >
-                ← Previous
+                ← {t("Previous")}
               </button>
               <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", padding: "0 0.5rem" }}>
-                Page {page} of {totalPages}
+                {t("Page")} {page} of {totalPages}
               </span>
               <button
                 className="btn btn-secondary"
@@ -283,14 +319,14 @@ export default function HistoryPage() {
                 onClick={() => setPage((p) => p + 1)}
                 style={{ padding: "0.375rem 0.75rem", fontSize: "0.8125rem" }}
               >
-                Next →
+                {t("Next")} →
               </button>
             </div>
           )}
 
           {/* Result Count */}
           <div style={{ textAlign: "center", marginTop: "0.75rem", fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>
-            Showing {data.items.length} of {data.total} predictions
+            {t("Showing")} {data.items.length} {t("of")} {data.total} {t("predictions")}
           </div>
         </>
       )}

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { getAnalyticsSummary } from "@/lib/api";
 import type { AnalyticsSummary } from "@/lib/types";
+import { useApp } from "@/context/AppContext";
+import AuthPage from "@/components/AuthPage";
 
 // Dynamic imports for Recharts — prevents SSR hydration issues
 const DiseaseChart = dynamic(() => import("@/components/DiseaseChart"), {
@@ -39,23 +41,39 @@ function StatCard({
 }
 
 export default function AnalyticsPage() {
+  const { user, isInitialized, t } = useApp();
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchAnalytics() {
+      if (!user) return;
       try {
         const summary = await getAnalyticsSummary();
         setData(summary);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load analytics.");
+        setError(err instanceof Error ? err.message : t("Failed to load analytics."));
       } finally {
         setLoading(false);
       }
     }
-    fetchAnalytics();
-  }, []);
+    if (user) {
+      fetchAnalytics();
+    }
+  }, [user]);
+
+  if (!isInitialized) {
+    return (
+      <div className="page-container" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "80vh" }}>
+        <div className="skeleton" style={{ height: "300px", width: "400px", borderRadius: "var(--radius-md)" }} />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
 
   if (loading) {
     return (
@@ -81,7 +99,7 @@ export default function AnalyticsPage() {
       <div className="page-container">
         <div className="empty-state">
           <div className="empty-state-icon">⚠️</div>
-          <h2 style={{ fontWeight: 600, marginBottom: "0.5rem" }}>Error Loading Analytics</h2>
+          <h2 style={{ fontWeight: 600, marginBottom: "0.5rem" }}>{t("Error Loading Analytics")}</h2>
           <p>{error}</p>
         </div>
       </div>
@@ -94,9 +112,9 @@ export default function AnalyticsPage() {
     <div className="page-container">
       {/* Header */}
       <div className="page-header">
-        <h1 className="page-title">📊 Analytics Dashboard</h1>
+        <h1 className="page-title">📊 {t("Analytics Dashboard")}</h1>
         <p className="page-subtitle">
-          Aggregated insights from crop disease predictions.
+          {t("Aggregated insights from crop disease predictions.")}
         </p>
       </div>
 
@@ -111,23 +129,23 @@ export default function AnalyticsPage() {
       >
         <StatCard
           icon="📈"
-          label="Total Predictions"
+          label={t("Total Predictions")}
           value={data.total_predictions}
         />
         <StatCard
           icon="🎯"
-          label="Avg Confidence"
+          label={t("Avg Confidence")}
           value={`${Math.round(data.average_confidence * 100)}%`}
         />
         <StatCard
           icon="🦠"
-          label="Diseases Detected"
+          label={t("Diseases Detected")}
           value={data.disease_distribution.length}
         />
         <StatCard
           icon="🌾"
-          label="Top Crop"
-          value={data.top_crop || "N/A"}
+          label={t("Top Crop")}
+          value={t(data.top_crop || "N/A")}
         />
       </div>
 
@@ -143,13 +161,13 @@ export default function AnalyticsPage() {
         {/* Disease Distribution */}
         <div className="card" style={{ padding: "1.5rem" }}>
           <h3 style={{ fontWeight: 600, marginBottom: "1rem", fontSize: "1rem" }}>
-            🦠 Disease Distribution
+            🦠 {t("Disease Distribution")}
           </h3>
           {data.disease_distribution.length > 0 ? (
             <DiseaseChart data={data.disease_distribution} />
           ) : (
             <div className="empty-state" style={{ padding: "2rem" }}>
-              <p>No disease data available yet.</p>
+              <p>{t("No disease data available yet.")}</p>
             </div>
           )}
         </div>
@@ -157,13 +175,13 @@ export default function AnalyticsPage() {
         {/* 7-Day Volume */}
         <div className="card" style={{ padding: "1.5rem" }}>
           <h3 style={{ fontWeight: 600, marginBottom: "1rem", fontSize: "1rem" }}>
-            📅 7-Day Prediction Volume
+            📅 {t("7-Day Prediction Volume")}
           </h3>
           {data.daily_volume.length > 0 ? (
             <VolumeChart data={data.daily_volume} />
           ) : (
             <div className="empty-state" style={{ padding: "2rem" }}>
-              <p>No recent prediction data available.</p>
+              <p>{t("No recent prediction data available.")}</p>
             </div>
           )}
         </div>
@@ -173,7 +191,7 @@ export default function AnalyticsPage() {
       {Object.keys(data.severity_distribution).length > 0 && (
         <div className="card" style={{ padding: "1.5rem" }}>
           <h3 style={{ fontWeight: 600, marginBottom: "1rem", fontSize: "1rem" }}>
-            ⚡ Severity Breakdown
+            ⚡ {t("Severity Breakdown")}
           </h3>
           <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
             {Object.entries(data.severity_distribution).map(([severity, count]) => {
@@ -196,10 +214,10 @@ export default function AnalyticsPage() {
                     border: "1px solid var(--color-border-light)",
                   }}
                 >
-                  <span className={`badge ${cls}`}>{severity}</span>
+                  <span className={`badge ${cls}`}>{t(severity)}</span>
                   <span style={{ fontWeight: 700, fontSize: "1.25rem" }}>{count}</span>
                   <span style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>
-                    predictions
+                    {t("predictions")}
                   </span>
                 </div>
               );

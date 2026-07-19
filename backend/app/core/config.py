@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     AI_PROVIDER: str = "mock"
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-3.1-flash-lite"
+    GOOGLE_TRANSLATE_API_KEY: str = ""
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "meta-llama/llama-4-scout-17b-16e-instruct"
     OPENAI_API_KEY: str = ""
@@ -42,6 +43,7 @@ class Settings(BaseSettings):
         "env_file": ".env",
         "env_file_encoding": "utf-8",
         "case_sensitive": True,
+        "extra": "ignore",
     }
 
 

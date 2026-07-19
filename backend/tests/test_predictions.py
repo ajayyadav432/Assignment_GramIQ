@@ -17,10 +17,9 @@ async def test_create_prediction_success(client, sample_image):
     data = response.json()
     assert data["crop_type"] == "Wheat"
     assert data["farmer_notes"] == "Yellow spots on leaves"
-    assert "predicted_disease" in data
-    assert "confidence" in data
-    assert 0.0 <= data["confidence"] <= 1.0
-    assert data["ai_provider"] == "mock"
+    assert data["predicted_disease"] == "Pending Review"
+    assert data["confidence"] == 0.0
+    assert data["ai_provider"] == "Hidden"
     assert "id" in data
     assert "created_at" in data
 
@@ -112,3 +111,39 @@ async def test_get_prediction_not_found(client):
         "/api/v1/predictions/00000000-0000-0000-0000-000000000000"
     )
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_agronomist_review_flow(client, sample_image):
+    """POST /predictions/{id}/review should allow Agronomists to verify and publish AI responses."""
+    # 1. Create a prediction (as Farmer by default override)
+    create_response = await client.post(
+        "/api/v1/predictions",
+        files={"image": ("test.jpg", io.BytesIO(sample_image), "image/jpeg")},
+        data={"crop_type": "Wheat", "farmer_notes": "Rust spots"},
+    )
+    assert create_response.status_code == 201
+    pred_id = create_response.json()["id"]
+
+    # 2. Verify it is pending review and details are masked
+    detail_response = await client.get(f"/api/v1/predictions/{pred_id}")
+    assert detail_response.json()["status"] == "PENDING_REVIEW"
+    assert detail_response.json()["predicted_disease"] == "Pending Review"
+
+    # 3. Submit Agronomist review (using client which overrides to test_agronomist)
+    review_response = await client.post(
+        f"/api/v1/predictions/{pred_id}/review",
+        json={
+            "predicted_disease": "Yellow Rust",
+            "severity": "Medium",
+            "review": "Fungicide recommended immediately."
+        }
+    )
+    assert review_response.status_code == 200
+    assert review_response.json()["status"] == "REVIEWED"
+
+    # 4. Fetch details again as farmer, verify it shows the reviewed content
+    detail_response_after = await client.get(f"/api/v1/predictions/{pred_id}")
+    assert detail_response_after.json()["status"] == "REVIEWED"
+    assert detail_response_after.json()["predicted_disease"] == "Yellow Rust"
+    assert detail_response_after.json()["recommendation"] == "Fungicide recommended immediately."
