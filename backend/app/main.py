@@ -81,6 +81,10 @@ def create_app() -> FastAPI:
     # Include API routers
     app.include_router(v1_router)
 
+    @app.get("/")
+    async def root_index():
+        return {"status": "ok", "message": "Welcome to Krishi Clinic Lite API"}
+
     return app
 
 
