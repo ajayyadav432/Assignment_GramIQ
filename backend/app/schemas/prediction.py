@@ -27,6 +27,15 @@ class PredictionResponse(BaseModel):
     recommendation: str | None = None
     ai_provider: str
     created_at: datetime
+    
+    # User profiles and Agronomist review workflow
+    farmer_id: UUID | None = None
+    agronomist_id: UUID | None = None
+    status: str
+    agronomist_review: str | None = None
+    agronomist_predicted_disease: str | None = None
+    agronomist_severity: str | None = None
+    reviewed_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -42,8 +51,19 @@ class PredictionListItem(BaseModel):
     severity: str | None = None
     ai_provider: str
     created_at: datetime
+    status: str
+    farmer_id: UUID | None = None
+    agronomist_id: UUID | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AgronomistReviewRequest(BaseModel):
+    """Advisory inputs submitted by an agronomist."""
+
+    predicted_disease: str = Field(..., min_length=1, max_length=150, description="Verified disease name")
+    severity: str = Field(..., description="Verified severity level (Low, Medium, High)")
+    review: str = Field(..., min_length=1, description="Treatment recommendation or advisory comments")
 
 
 class PredictionListResponse(BaseModel):

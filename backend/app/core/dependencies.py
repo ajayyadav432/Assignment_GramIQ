@@ -7,11 +7,18 @@ where concrete implementations are bound to abstract interfaces.
 """
 
 from typing import AsyncGenerator
+import uuid
+import logging
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Query, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 
 from app.core.config import get_settings
 from app.core.database import async_session_factory
+from app.models.user import User
+from app.core.security import decode_access_token
 from app.ai.base import AIProvider
 from app.ai.mock_provider import MockProvider
 from app.ai.gemini_provider import GeminiProvider
@@ -20,7 +27,6 @@ from app.ai.openai_provider import OpenAIProvider
 from app.ai.fallback_provider import FallbackAIProvider
 from app.storage.base import StorageProvider
 from app.storage.local_storage import LocalStorage
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -120,3 +126,89 @@ def get_storage_provider() -> StorageProvider:
     """
     settings = get_settings()
     return LocalStorage(upload_dir=settings.UPLOAD_DIR)
+
+
+# OAuth2 scheme for extracting JWT tokens from Authorization: Bearer <token>
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login", auto_error=False)
+
+
+async def get_current_user(
+    token_bearer: str | None = Depends(oauth2_scheme),
+    token_query: str | None = Query(None, alias="token"),
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    """
+    Extract the JWT access token, decode it, and retrieve the current User.
+    Supports both Authorization header and query parameter 'token' for testing.
+    """
+    token = token_bearer or token_query
+    
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication credentials were not provided."
+        )
+        
+    if token.lower().startswith("bearer "):
+        token = token[7:]
+        
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Signature has expired or is invalid."
+        )
+        
+    user_id_str = payload.get("sub")
+    if not user_id_str:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token payload is missing subject identity."
+        )
+        
+    try:
+        user_uuid = uuid.UUID(user_id_str)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Malformed token subject identity."
+        )
+        
+    result = await db.execute(select(User).where(User.id == user_uuid))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User associated with this token does not exist."
+        )
+        
+    return user
+
+
+async def get_current_farmer(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    Verify the logged-in user is a FARMER.
+    Agronomists are treated as superusers and can also access farmer actions.
+    """
+    if current_user.role not in {"FARMER", "AGRONOMIST"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Operation restricted to Farmers."
+        )
+    return current_user
+
+
+async def get_current_agronomist(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    Verify the logged-in user has the AGRONOMIST role.
+    """
+    if current_user.role != "AGRONOMIST":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Operation restricted to Agronomists."
+        )
+    return current_user
