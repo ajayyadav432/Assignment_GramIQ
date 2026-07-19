@@ -2,7 +2,9 @@
 
 > AI-powered crop disease diagnosis dashboard — built for India's agricultural intelligence platform.
 
-![CI](https://github.com/YOUR_USERNAME/krishi-clinic-lite/actions/workflows/ci.yml/badge.svg)
+### 🌐 Live Production Demo: **[frontend-woad-mu-58.vercel.app](https://frontend-woad-mu-58.vercel.app)**
+
+![CI](https://github.com/ajayyadav432/Assignment_GramIQ/actions/workflows/ci.yml/badge.svg)
 
 ## Overview
 
