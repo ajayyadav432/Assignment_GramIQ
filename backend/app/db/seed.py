@@ -333,8 +333,20 @@ async def seed_database():
     to prevent duplicate seeding on container restarts.
     """
     settings = get_settings()
+    db_url = settings.DATABASE_URL
+    connect_args = {}
+    if "sslmode=" in db_url:
+        if "?" in db_url:
+            base_url, query = db_url.split("?", 1)
+            params = query.split("&")
+            filtered_params = [p for p in params if not p.startswith("sslmode=")]
+            if filtered_params:
+                db_url = f"{base_url}?{'&'.join(filtered_params)}"
+            else:
+                db_url = base_url
+        connect_args["ssl"] = True
 
-    engine = create_async_engine(settings.DATABASE_URL)
+    engine = create_async_engine(db_url, connect_args=connect_args)
     session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with session_factory() as session:
