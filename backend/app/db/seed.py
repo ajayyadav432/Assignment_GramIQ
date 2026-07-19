@@ -333,7 +333,7 @@ async def seed_database():
     to prevent duplicate seeding on container restarts.
     """
     settings = get_settings()
-    db_url = settings.DATABASE_URL
+    db_url = settings.DATABASE_URL.strip()
     # Auto-upgrade dialect to asyncpg if standard postgres or postgresql is provided
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)

@@ -16,7 +16,7 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-db_url = settings.DATABASE_URL
+db_url = settings.DATABASE_URL.strip()
 # Auto-upgrade dialect to asyncpg if standard postgres or postgresql is provided
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)

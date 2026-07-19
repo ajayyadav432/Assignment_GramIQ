@@ -6,8 +6,10 @@ export PYTHONPATH=/app
 echo "==> Waiting for PostgreSQL to be ready..."
 
 if [ -n "$DATABASE_URL" ]; then
+    # Strip trailing carriage returns and spaces to prevent DNS resolution errors
+    CLEAN_DB_URL=$(echo "$DATABASE_URL" | tr -d '\r' | tr -d ' ')
     # Strip +asyncpg prefix and any sslmode query parameters for raw asyncpg check
-    DB_CONN_URL=$(echo "$DATABASE_URL" | sed 's/postgresql+asyncpg/postgresql/' | sed 's/[?&]sslmode=[^&]*//g')
+    DB_CONN_URL=$(echo "$CLEAN_DB_URL" | sed 's/postgresql+asyncpg/postgresql/' | sed 's/[?&]sslmode=[^&]*//g')
 else
     DB_CONN_URL="postgresql://postgres:postgres@db:5432/krishiclinic"
 fi
