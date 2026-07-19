@@ -48,6 +48,8 @@ class PredictionService:
         crop_type: str,
         farmer_id: uuid.UUID,
         farmer_notes: str | None = None,
+        location: str | None = None,
+        language: str | None = None,
     ) -> Prediction:
         """
         Full prediction pipeline: store image → RAG retrieval → analyze → persist record.
@@ -113,6 +115,9 @@ class PredictionService:
             confidence=ai_result.confidence,
             severity=ai_result.severity,
             recommendation=ai_result.recommendation,
+            possible_reasons=ai_result.possible_reasons,
+            location=location,
+            language=language,
             ai_provider=self._ai.provider_name,
             farmer_id=farmer_id,
             status="PENDING_REVIEW",

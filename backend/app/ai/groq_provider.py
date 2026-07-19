@@ -57,9 +57,10 @@ class GroqProvider(AIProvider):
             f'- "predicted_disease": the most likely disease name (string)\n'
             f'- "confidence": a float between 0.0 and 1.0\n'
             f'- "severity": exactly one of "Low", "Medium", or "High"\n'
-            f'- "recommendation": specific, actionable treatment advice (string)\n\n'
+            f'- "recommendation": specific, actionable treatment advice (string)\n'
+            f'- "possible_reasons": possible reasons/triggers for the disease (string)\n\n'
             f"If the plant appears healthy, set predicted_disease to 'Healthy', "
-            f"confidence to 0.95, severity to 'Low', and provide general care advice."
+            f"confidence to 0.95, severity to 'Low', possible_reasons to 'N/A', and provide general care advice."
         )
 
         # Encode image to base64

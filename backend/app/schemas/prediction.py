@@ -37,6 +37,10 @@ class PredictionResponse(BaseModel):
     agronomist_severity: str | None = None
     reviewed_at: datetime | None = None
 
+    possible_reasons: str | None = None
+    location: str | None = None
+    language: str | None = None
+
     model_config = ConfigDict(from_attributes=True)
 
 

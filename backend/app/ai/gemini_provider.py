@@ -58,9 +58,10 @@ class GeminiProvider(AIProvider):
             f"- predicted_disease: the most likely disease name\n"
             f"- confidence: a float between 0.0 and 1.0\n"
             f"- severity: exactly one of 'Low', 'Medium', or 'High'\n"
-            f"- recommendation: specific, actionable treatment advice\n\n"
+            f"- recommendation: specific, actionable treatment advice\n"
+            f"- possible_reasons: brief summary of possible reasons or triggers for this disease (e.g. humidity, pest vectors, soil moisture)\n\n"
             f"If the plant appears healthy, set predicted_disease to 'Healthy', "
-            f"confidence to 0.95, severity to 'Low', and provide general care advice."
+            f"confidence to 0.95, severity to 'Low', possible_reasons to 'N/A', and provide general care advice."
         )
 
         try:

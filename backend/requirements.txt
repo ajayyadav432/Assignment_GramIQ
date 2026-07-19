@@ -28,3 +28,6 @@ pytest-asyncio==0.24.0
 
 # Linting
 ruff==0.6.0
+
+# PDF Generation
+reportlab==4.2.5

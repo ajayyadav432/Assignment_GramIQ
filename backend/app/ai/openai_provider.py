@@ -63,7 +63,8 @@ class OpenAIProvider(AIProvider):
             f'- "predicted_disease": string (disease name, or "Healthy")\n'
             f'- "confidence": float (0.0 to 1.0)\n'
             f'- "severity": string (exactly "Low", "Medium", or "High")\n'
-            f'- "recommendation": string (specific treatment advice)'
+            f'- "recommendation": string (specific treatment advice)\n'
+            f'- "possible_reasons": string (possible reasons/triggers for the disease)'
         )
 
         try:

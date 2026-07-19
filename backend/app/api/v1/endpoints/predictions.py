@@ -40,11 +40,32 @@ router = APIRouter()
 
 def mask_prediction(p, user_role: str):
     """
-    Mask raw AI response fields if prediction is pending review and user is not an Agronomist.
+    Mask raw AI response fields if prediction is pending review and user is not an Agronomist or Admin.
     If prediction is reviewed, return agronomist's verified diagnosis and review notes.
     """
-    if user_role == "AGRONOMIST":
-        return p
+    if user_role in ("AGRONOMIST", "ADMIN"):
+        return {
+            "id": p.id,
+            "crop_type": p.crop_type,
+            "image_filename": p.image_filename,
+            "farmer_notes": p.farmer_notes,
+            "predicted_disease": p.predicted_disease,
+            "confidence": p.confidence,
+            "severity": p.severity,
+            "recommendation": p.recommendation,
+            "possible_reasons": p.possible_reasons,
+            "location": p.location,
+            "language": p.language,
+            "ai_provider": p.ai_provider,
+            "created_at": p.created_at,
+            "farmer_id": p.farmer_id,
+            "agronomist_id": p.agronomist_id,
+            "status": p.status,
+            "agronomist_review": p.agronomist_review,
+            "agronomist_predicted_disease": p.agronomist_predicted_disease,
+            "agronomist_severity": p.agronomist_severity,
+            "reviewed_at": p.reviewed_at
+        }
     
     if p.status == "PENDING_REVIEW":
         return {
@@ -56,6 +77,9 @@ def mask_prediction(p, user_role: str):
             "confidence": 0.0,
             "severity": "Pending",
             "recommendation": "Our agricultural expert is currently reviewing this prediction. You will receive the advice once verified.",
+            "possible_reasons": "Pending Review",
+            "location": p.location,
+            "language": p.language,
             "ai_provider": "Hidden",
             "created_at": p.created_at,
             "farmer_id": p.farmer_id,
@@ -77,6 +101,9 @@ def mask_prediction(p, user_role: str):
         "confidence": p.confidence,
         "severity": p.agronomist_severity or p.severity,
         "recommendation": p.agronomist_review or p.recommendation,
+        "possible_reasons": p.possible_reasons,
+        "location": p.location,
+        "language": p.language,
         "ai_provider": p.ai_provider,
         "created_at": p.created_at,
         "farmer_id": p.farmer_id,
@@ -93,7 +120,7 @@ def mask_prediction_list_item(p, user_role: str):
     """
     Lightweight masking for the predictions list view.
     """
-    if user_role == "AGRONOMIST":
+    if user_role in ("AGRONOMIST", "ADMIN"):
         return p
     
     if p.status == "PENDING_REVIEW":
@@ -183,6 +210,8 @@ async def create_prediction(
     image: UploadFile = File(..., description="Crop image (JPEG, PNG, or WebP)"),
     crop_type: str = Form(..., description="Type of crop (e.g., Wheat, Rice, Tomato)"),
     farmer_notes: str = Form(None, description="Optional observations from the farmer"),
+    location: str = Form(None, description="Location/Region of the farmer"),
+    language: str = Form(None, description="Language for diagnosis translation"),
     ai_provider_name: str = Form(None, description="Optional AI provider override: mock, gemini, groq, openai"),
     db: AsyncSession = Depends(get_db),
     ai_provider: AIProvider = Depends(get_ai_provider),
@@ -230,6 +259,8 @@ async def create_prediction(
             crop_type=crop_type,
             farmer_id=current_user.id,
             farmer_notes=farmer_notes,
+            location=location,
+            language=language,
         )
         return mask_prediction(prediction, current_user.role)
 

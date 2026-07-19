@@ -26,6 +26,7 @@ class PredictionResult(BaseModel):
     )
     severity: str = Field(description="Severity level: Low, Medium, or High")
     recommendation: str = Field(description="Actionable treatment recommendation")
+    possible_reasons: str = Field(description="Possible reasons/triggers for the disease")
 
 
 class AIProvider(ABC):

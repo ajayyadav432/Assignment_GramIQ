@@ -84,6 +84,19 @@ class Prediction(Base):
         TIMESTAMP(timezone=True), nullable=True, doc="Timestamp of agronomist review"
     )
 
+    possible_reasons: Mapped[str | None] = mapped_column(
+        Text, nullable=True, doc="Possible reasons/triggers for the disease"
+    )
+    location: Mapped[str | None] = mapped_column(
+        String(100), nullable=True, doc="Location of the crop/farm"
+    )
+    language: Mapped[str | None] = mapped_column(
+        String(50), nullable=True, doc="Preferred language of the query"
+    )
+
+    # Comments relationship
+    comments = relationship("Comment", back_populates="prediction", cascade="all, delete-orphan")
+
     # RAG Support
     notes_embedding: Mapped[list[float] | None] = mapped_column(
         JSON, nullable=True, doc="Vector embedding of farmer_notes + crop_type"

@@ -350,6 +350,15 @@ class MockProvider(AIProvider):
 
         # Use image hash to deterministically select a disease variant
         image_hash = int(hashlib.md5(image).hexdigest(), 16)
-        selected = diseases[image_hash % len(diseases)]
+        selected = diseases[image_hash % len(diseases)].copy()
+
+        if "possible_reasons" not in selected:
+            if selected["predicted_disease"] == "Healthy":
+                selected["possible_reasons"] = "Good agricultural practices and favorable weather conditions."
+            else:
+                selected["possible_reasons"] = (
+                    f"Fungal spore transmission, high relative humidity (above 85%), "
+                    f"and prolonged wetness on the leaves of the {crop_type} crop."
+                )
 
         return PredictionResult(**selected)

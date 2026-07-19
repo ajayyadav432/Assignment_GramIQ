@@ -4,7 +4,7 @@ API v1 router — aggregates all endpoint routers under /api/v1.
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import health, predictions, analytics, export, auth, translate
+from app.api.v1.endpoints import health, predictions, analytics, export, auth, translate, comments
 
 router = APIRouter()
 
@@ -21,5 +21,6 @@ router.include_router(translate.router, prefix="/api/v1", tags=["Translation"])
 # Include export first so /predictions/export is matched before /predictions/{prediction_id}
 router.include_router(export.router, prefix="/api/v1", tags=["Export"])
 router.include_router(predictions.router, prefix="/api/v1", tags=["Predictions"])
+router.include_router(comments.router, prefix="/api/v1", tags=["Comments"])
 router.include_router(analytics.router, prefix="/api/v1", tags=["Analytics"])
 
