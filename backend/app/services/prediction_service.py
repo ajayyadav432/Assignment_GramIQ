@@ -263,3 +263,146 @@ class PredictionService:
             "severity_distribution": severity_distribution,
             "top_crop": top_crop,
         }
+
+    async def create_prediction_placeholder(
+        self,
+        image_bytes: bytes,
+        image_filename: str,
+        crop_type: str,
+        farmer_id: uuid.UUID,
+        farmer_notes: str | None = None,
+        location: str | None = None,
+        language: str | None = None,
+        ai_provider_name: str | None = None,
+    ) -> Prediction:
+        """
+        Creates a fast database placeholder record, persisting the image immediately.
+        The heavy AI analysis is deferred to a background task.
+        """
+        stored_filename = await self._storage.save(image_filename, image_bytes)
+        logger.info(f"Image saved: {stored_filename}")
+
+        prediction = Prediction(
+            id=uuid.uuid4(),
+            crop_type=crop_type,
+            image_filename=stored_filename,
+            farmer_notes=farmer_notes,
+            predicted_disease="Analyzing...",
+            confidence=0.0,
+            severity="Pending",
+            recommendation="AI is analyzing your crop image. Results will appear shortly.",
+            possible_reasons="Analyzing...",
+            location=location,
+            language=language,
+            ai_provider=ai_provider_name or self._ai.provider_name,
+            farmer_id=farmer_id,
+            status="PENDING_REVIEW",
+        )
+
+        self._db.add(prediction)
+        await self._db.commit()
+        await self._db.refresh(prediction)
+        return prediction
+
+
+async def process_prediction_background(
+    prediction_id: uuid.UUID,
+    image_bytes: bytes,
+    crop_type: str,
+    farmer_notes: str | None,
+    ai_provider_name: str | None,
+):
+    """
+    Asynchronous background task to run RAG matching, call the AI PATH provider,
+    and update the database prediction record.
+    """
+    from app.core.database import async_session_factory
+    from app.core.dependencies import get_ai_provider_by_name
+    from app.ai.embedding import generate_embedding, cosine_similarity
+    from app.models.prediction import Prediction
+    from sqlalchemy import select
+
+    logger.info(f"Starting async background analysis for prediction {prediction_id}")
+
+    # 1. Resolve AI provider
+    try:
+        if ai_provider_name and ai_provider_name.strip():
+            ai = get_ai_provider_by_name(ai_provider_name.strip().lower())
+        else:
+            from app.core.config import get_settings
+            settings = get_settings()
+            ai = get_ai_provider_by_name(settings.AI_PROVIDER)
+    except Exception as e:
+        logger.error(f"Failed to load AI provider in background: {e}", exc_info=True)
+        return
+
+    # 2. Run embedding & RAG search
+    embedding = None
+    rag_context = ""
+    try:
+        embedding_text = f"{crop_type}: {farmer_notes or ''}"
+        embedding = await generate_embedding(embedding_text)
+
+        async with async_session_factory() as session:
+            # Query reviewed predictions for RAG similarity
+            result = await session.execute(
+                select(Prediction)
+                .where(Prediction.status == "REVIEWED")
+                .where(Prediction.crop_type == crop_type)
+                .where(Prediction.notes_embedding.isnot(None))
+            )
+            candidates = result.scalars().all()
+
+            scored = []
+            for cand in candidates:
+                if cand.notes_embedding:
+                    sim = cosine_similarity(embedding, cand.notes_embedding)
+                    scored.append((sim, cand))
+
+            scored.sort(key=lambda x: x[0], reverse=True)
+            top_similar = scored[:2]
+
+            if top_similar:
+                rag_context = "\n\n=== BIOBANK HISTORICAL CASES (Agronomist Verified) ===\n"
+                for idx, (sim, cand) in enumerate(top_similar):
+                    rag_context += f"Case {idx+1} (Similarity: {sim:.2f}):\n"
+                    rag_context += f"- Farmer Observations: {cand.farmer_notes or 'None'}\n"
+                    rag_context += f"- Verified Diagnosis: {cand.agronomist_predicted_disease or cand.predicted_disease}\n"
+                    rag_context += f"- Verified Treatment/Advisory: {cand.agronomist_review or cand.recommendation}\n\n"
+                logger.info(f"Background RAG found {len(top_similar)} similar cases.")
+    except Exception as e:
+        logger.warning(f"Background RAG/Embedding generation failed: {e}", exc_info=True)
+
+    # 3. Call AI analysis
+    ai_notes = (farmer_notes or "") + rag_context
+    try:
+        ai_result = await ai.analyze(image_bytes, crop_type, ai_notes)
+        logger.info(f"Background AI completed: {ai_result.predicted_disease} for prediction {prediction_id}")
+    except Exception as e:
+        logger.error(f"Background AI analysis failed for prediction {prediction_id}: {e}", exc_info=True)
+        async with async_session_factory() as session:
+            res = await session.execute(select(Prediction).where(Prediction.id == prediction_id))
+            pred = res.scalar_one_or_none()
+            if pred:
+                pred.predicted_disease = "AI Error"
+                pred.recommendation = f"Error during AI analysis: {str(e)}. Please retry or consult an agronomist."
+                pred.possible_reasons = "System Error"
+                session.add(pred)
+                await session.commit()
+        return
+
+    # 4. Save results to DB
+    async with async_session_factory() as session:
+        res = await session.execute(select(Prediction).where(Prediction.id == prediction_id))
+        pred = res.scalar_one_or_none()
+        if pred:
+            pred.predicted_disease = ai_result.predicted_disease
+            pred.confidence = ai_result.confidence
+            pred.severity = ai_result.severity
+            pred.recommendation = ai_result.recommendation
+            pred.possible_reasons = ai_result.possible_reasons
+            pred.notes_embedding = embedding
+            pred.ai_provider = ai.provider_name
+            session.add(pred)
+            await session.commit()
+            logger.info(f"Background prediction {prediction_id} successfully saved to database.")

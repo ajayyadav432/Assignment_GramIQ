@@ -6,7 +6,11 @@ import { createPrediction } from "@/lib/api";
 import { CROP_TYPES, AI_PROVIDERS } from "@/lib/types";
 import { useApp } from "@/context/AppContext";
 
-export default function UploadForm() {
+interface UploadFormProps {
+  onSubmitSuccess?: () => void;
+}
+
+export default function UploadForm({ onSubmitSuccess }: UploadFormProps = {}) {
   const router = useRouter();
   const { t, language } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,6 +71,11 @@ export default function UploadForm() {
 
     setIsSubmitting(true);
     setError(null);
+
+    // Collapse the screen immediately as soon as the user hits submit
+    if (onSubmitSuccess) {
+      onSubmitSuccess();
+    }
 
     try {
       const formData = new FormData();
@@ -270,39 +279,15 @@ export default function UploadForm() {
       <button
         type="submit"
         className="btn btn-primary"
-        disabled={!file || !cropType || isSubmitting}
+        disabled={!file || !cropType}
         style={{
           width: "100%",
           padding: "0.875rem",
           fontSize: "1rem",
         }}
       >
-        {isSubmitting ? (
-          <>
-            <span
-              style={{
-                display: "inline-block",
-                width: "16px",
-                height: "16px",
-                border: "2px solid rgba(255,255,255,0.3)",
-                borderTopColor: "white",
-                borderRadius: "50%",
-                animation: "spin 0.8s linear infinite",
-              }}
-            />
-            {t("Analyzing...")}
-          </>
-        ) : (
-          <>{t("🔬 Analyze Crop Disease")}</>
-        )}
+        {t("🔬 Analyze Crop Disease")}
       </button>
-
-      {/* Upload Progress Indicator */}
-      {isSubmitting && (
-        <div className="progress-bar">
-          <div className="progress-fill" style={{ width: "80%" }} />
-        </div>
-      )}
 
       <style jsx>{`
         @keyframes spin {

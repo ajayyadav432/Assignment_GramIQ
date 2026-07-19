@@ -711,7 +711,7 @@ export default function HomePage() {
             
             {/* Embedded upload form */}
             <div onClick={(e) => e.stopPropagation()}>
-              <UploadForm />
+              <UploadForm onSubmitSuccess={() => setShowUploadModal(false)} />
             </div>
           </div>
         </div>

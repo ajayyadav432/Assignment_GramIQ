@@ -9,7 +9,7 @@ Route handlers are intentionally thin — all logic lives in the service layer.
 import uuid
 import logging
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from datetime import datetime, timezone
@@ -31,7 +31,7 @@ from app.schemas.prediction import (
     PredictionResponse,
     AgronomistReviewRequest,
 )
-from app.services.prediction_service import PredictionService
+from app.services.prediction_service import PredictionService, process_prediction_background
 from app.storage.base import StorageProvider
 
 logger = logging.getLogger(__name__)
@@ -207,6 +207,7 @@ def _validate_image(file: UploadFile, content: bytes) -> None:
     description="Upload a crop image for AI-powered disease analysis.",
 )
 async def create_prediction(
+    background_tasks: BackgroundTasks,
     image: UploadFile = File(..., description="Crop image (JPEG, PNG, or WebP)"),
     crop_type: str = Form(..., description="Type of crop (e.g., Wheat, Rice, Tomato)"),
     farmer_notes: str = Form(None, description="Optional observations from the farmer"),
@@ -253,7 +254,7 @@ async def create_prediction(
     # Delegate to service layer
     try:
         service = PredictionService(db, ai_provider, storage)
-        prediction = await service.create_prediction(
+        prediction = await service.create_prediction_placeholder(
             image_bytes=content,
             image_filename=image.filename or "upload.jpg",
             crop_type=crop_type,
@@ -261,7 +262,19 @@ async def create_prediction(
             farmer_notes=farmer_notes,
             location=location,
             language=language,
+            ai_provider_name=ai_provider_name,
         )
+        
+        # Queue processing task to execute asynchronously
+        background_tasks.add_task(
+            process_prediction_background,
+            prediction.id,
+            content,
+            crop_type,
+            farmer_notes,
+            ai_provider_name,
+        )
+        
         return mask_prediction(prediction, current_user.role)
 
     except RuntimeError as e:
