@@ -8,7 +8,9 @@ Supports the Admin portal requirements for auditing and offline analysis.
 import csv
 import io
 import json
+import logging
 import os
+import uuid
 from datetime import datetime, timezone
 import xml.etree.ElementTree as ET
 
@@ -23,10 +25,12 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
+from app.core.config import get_settings
 from app.core.dependencies import get_db, get_current_user
 from app.models.prediction import Prediction
 from app.models.user import User
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -288,11 +292,12 @@ async def export_prediction_pdf(
 
     # Add Crop Image if exists
     if p.image_filename:
-        # Resolve image path relative to workspace root
-        img_path = os.path.join("uploads", p.image_filename)
+        # Resolve image path using the configured UPLOAD_DIR (works in both local and Render)
+        settings = get_settings()
+        upload_dir = os.path.abspath(settings.UPLOAD_DIR)
+        img_path = os.path.join(upload_dir, p.image_filename)
         if os.path.exists(img_path):
             try:
-                # Add image cleanly
                 img = Image(img_path, width=240, height=180)
                 img.hAlign = 'LEFT'
                 story.append(Paragraph("Captured Crop Image", section_heading))
@@ -300,6 +305,8 @@ async def export_prediction_pdf(
                 story.append(Spacer(1, 15))
             except Exception as e:
                 logger.error(f"Failed to embed image in PDF: {e}")
+        else:
+            logger.warning(f"Image not found on disk for PDF: {img_path}")
 
     # Farmer's Notes
     story.append(Paragraph("Farmer Observations & Notes", section_heading))

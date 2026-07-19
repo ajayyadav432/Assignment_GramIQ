@@ -186,7 +186,14 @@ export async function downloadPdf(predictionId: string): Promise<void> {
 
   const res = await fetch(url, { headers });
   if (!res.ok) {
-    throw new ApiError(`Failed to download PDF: ${res.statusText}`, res.status);
+    let errDetail = "";
+    try {
+      const body = await res.json();
+      errDetail = body?.detail || JSON.stringify(body);
+    } catch {
+      errDetail = await res.text().catch(() => res.statusText);
+    }
+    throw new ApiError(`Failed to download PDF: ${res.status} — ${errDetail}`, res.status);
   }
 
   const blob = await res.blob();
