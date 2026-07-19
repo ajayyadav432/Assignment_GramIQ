@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # AI Provider: "mock" | "gemini" | "groq" | "openai"
     AI_PROVIDER: str = "mock"
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.0-flash"
+    GEMINI_MODEL: str = "gemini-3.1-flash-lite"
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "meta-llama/llama-4-scout-17b-16e-instruct"
     OPENAI_API_KEY: str = ""
