@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { listPredictions, reviewPrediction, getImageUrl } from "@/lib/api";
-import { useApp } from "@/context/AppContext";
+import { useApp, Translate } from "@/context/AppContext";
 import type { Prediction } from "@/lib/types";
 
 export default function AgronomistPortal() {
@@ -157,9 +157,9 @@ export default function AgronomistPortal() {
                     )}
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                        <span style={{ fontWeight: 700, fontSize: "1rem" }}>{pred.crop_type}</span>
+                        <span style={{ fontWeight: 700, fontSize: "1rem" }}><Translate text={pred.crop_type} /></span>
                         <span className="badge badge-medium" style={{ background: "#e0f2fe", color: "#0369a1" }}>
-                          AI: {pred.predicted_disease}
+                          AI: <Translate text={pred.predicted_disease} />
                         </span>
                       </div>
                       <p
@@ -173,7 +173,7 @@ export default function AgronomistPortal() {
                           maxWidth: "300px",
                         }}
                       >
-                        {pred.farmer_notes || <em>{t("No notes provided")}</em>}
+                        {pred.farmer_notes ? <Translate text={pred.farmer_notes} /> : <em>{t("No notes provided")}</em>}
                       </p>
                       <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", marginTop: "0.5rem" }}>
                         ⏱️ {new Date(pred.created_at).toLocaleDateString("en-IN")}

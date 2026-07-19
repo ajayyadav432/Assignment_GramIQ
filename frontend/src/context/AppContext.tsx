@@ -80,6 +80,40 @@ const STATIC_TRANSLATIONS: Record<string, Record<string, string>> = {
     "Low": "निम्न",
     "Medium": "मध्यम",
     "High": "उच्च",
+    "Date": "दिनांक",
+    "Crop": "फसल",
+    "Disease": "बीमारी",
+    "Provider": "प्रदाता",
+    "View": "देखें",
+    "All crops": "सभी फसलें",
+    "Filter by disease...": "बीमारी से छानें...",
+    "Clear Filters": "फ़िल्टर साफ़ करें",
+    "Previous": "पिछला",
+    "Next": "अगला",
+    "Page": "पृष्ठ",
+    "Showing": "दिखा रहा है",
+    "of": "का",
+    "predictions": "पूर्वानुमान",
+    "PENDING": "लंबित",
+    "PENDING_REVIEW": "समीक्षा लंबित",
+    "REVIEWED": "सत्यापित",
+    "Wheat": "गेहूं",
+    "Rice": "चावल",
+    "Tomato": "टमाटर",
+    "Corn": "मक्का",
+    "Potato": "आलू",
+    "Cotton": "कपास",
+    "Sugarcane": "गन्ना",
+    "Soybean": "सोयाबीन",
+    "Mustard": "सरसों",
+    "Groundnut": "मूंगफली",
+    "Chilli": "मिर्च",
+    "mock": "Mock (परीक्षण)",
+    "gemini": "Google Gemini",
+    "groq": "Groq Llama 4",
+    "openai": "OpenAI GPT",
+    "Hidden": "प्रच्छन्न",
+    "Healthy": "स्वस्थ",
   },
   te: {
     "Upload": "అప్‌లోడ్",
@@ -96,7 +130,7 @@ const STATIC_TRANSLATIONS: Record<string, Record<string, string>> = {
     "Farmer Notes": "రైతు గమనికలు",
     "Describe what you see (e.g., yellow spots, wilting)": "మీరు గమనించిన వివరాలు (ఉదా. పసుపు మచ్చలు, ఆకులు ముడుచుకోవడం)",
     "AI Model": "AI మోడల్",
-    "Upload Image": "చిత్రాన్ని అప్‌లోड చేయండి",
+    "Upload Image": "చిత్రాన్ని అప్‌లోడ్ చేయండి",
     "Analyzing...": "విశ్లేషిస్తోంది...",
     "Diagnosis Result": "నిర్ధారణ ఫలితం",
     "Confidence": "నమ్మకశాతం",
@@ -109,7 +143,7 @@ const STATIC_TRANSLATIONS: Record<string, Record<string, string>> = {
     "Username": "యూజర్ నేమ్",
     "Password": "పాస్‌వర్డ్",
     "Register": "నమోదు",
-    "Agronomist Portal": "👨‍🌾 నిపుణుల పోర్तल",
+    "Agronomist Portal": "👨‍🌾 నిపుణుల పోర్టల్",
     "Pending Requests": "సమీక్ష కోసం వేచి ఉన్న అభ్యర్థనలు",
     "Submit Review": "సమీక్షను సమర్పించండి",
     "Confirm Diagnosis": "తెగులును ధృవీకరించండి",
@@ -137,6 +171,40 @@ const STATIC_TRANSLATIONS: Record<string, Record<string, string>> = {
     "Low": "తక్కువ",
     "Medium": "మధ్యస్థం",
     "High": "ఎక్కువ",
+    "Date": "తేది",
+    "Crop": "పంట",
+    "Disease": "తెగులు",
+    "Provider": "ప్రదాత",
+    "View": "చూడండి",
+    "All crops": "అన్ని పంటలు",
+    "Filter by disease...": "తెగులు ద్వారా వడపోత...",
+    "Clear Filters": "ఫిల్టర్లను తీసివేయి",
+    "Previous": "మునుపటి",
+    "Next": "తదుపరి",
+    "Page": "పేజీ",
+    "Showing": "చూపిస్తోంది",
+    "of": "లో",
+    "predictions": "అంచనాలు",
+    "PENDING": "పెండింగ్",
+    "PENDING_REVIEW": "సమీక్ష పెండింగ్",
+    "REVIEWED": "ధృవీకరించబడింది",
+    "Wheat": "గోధుమ",
+    "Rice": "వరి",
+    "Tomato": "టమోటా",
+    "Corn": "مొక్కజొన్న",
+    "Potato": "బంగాళాదుంప",
+    "Cotton": "పత్తి",
+    "Sugarcane": "చెరకు",
+    "Soybean": "సోయాబీన్",
+    "Mustard": "ఆవాలు",
+    "Groundnut": "వేరుశనగ",
+    "Chilli": "మిరపకాయ",
+    "mock": "Mock (టెస్ట్)",
+    "gemini": "Google Gemini",
+    "groq": "Groq Llama 4",
+    "openai": "OpenAI GPT",
+    "Hidden": "దాచబడింది",
+    "Healthy": "ఆరోగ్యకరమైనది",
   },
   mr: {
     "Upload": "अपलोड करा",
@@ -149,7 +217,7 @@ const STATIC_TRANSLATIONS: Record<string, Record<string, string>> = {
     "Instant AI analysis": "⚡ झटपट AI विश्लेषण",
     "8+ crop types": "🌾 ८+ पिकांचे प्रकार",
     "Crop Type": "पिकाचा प्रकार",
-    "Select a crop": "पीक निवडा",
+    "Select a crop": "पीक निदान",
     "Farmer Notes": "शेतकऱ्याची नोंद",
     "Describe what you see (e.g., yellow spots, wilting)": "तुम्हाला काय दिसते ते लिहा (उदा. पिवळे डाग, कोमेजणे)",
     "AI Model": "AI मॉडेल",
@@ -194,6 +262,40 @@ const STATIC_TRANSLATIONS: Record<string, Record<string, string>> = {
     "Low": "कमी",
     "Medium": "मध्यम",
     "High": "जास्त",
+    "Date": "तारीख",
+    "Crop": "पीक",
+    "Disease": "रोग",
+    "Provider": "प्रदाता",
+    "View": "पहा",
+    "All crops": "सर्व पिके",
+    "Filter by disease...": "रोगाने फिल्टर करा...",
+    "Clear Filters": "फिल्टर साफ करा",
+    "Previous": "मागील",
+    "Next": "पुढील",
+    "Page": "पान",
+    "Showing": "दाखवत आहे",
+    "of": "पैकी",
+    "predictions": "अंदाज",
+    "PENDING": "प्रलंबित",
+    "PENDING_REVIEW": "पुनरावलोकन प्रलंबित",
+    "REVIEWED": "सत्यापित",
+    "Wheat": "गहू",
+    "Rice": "तांदूळ",
+    "Tomato": "टोमॅटो",
+    "Corn": "मका",
+    "Potato": "बटाटा",
+    "Cotton": "कापूस",
+    "Sugarcane": "ऊस",
+    "Soybean": "सोयाबीन",
+    "Mustard": "मोहरी",
+    "Groundnut": "भुईमूग",
+    "Chilli": "मिरची",
+    "mock": "Mock (चाचणी)",
+    "gemini": "Google Gemini",
+    "groq": "Groq Llama 4",
+    "openai": "OpenAI GPT",
+    "Hidden": "लपवलेले",
+    "Healthy": "निरोगी",
   },
   es: {
     "Upload": "Subir",
@@ -251,6 +353,40 @@ const STATIC_TRANSLATIONS: Record<string, Record<string, string>> = {
     "Low": "Bajo",
     "Medium": "Medio",
     "High": "Alto",
+    "Date": "Fecha",
+    "Crop": "Cultivo",
+    "Disease": "Enfermedad",
+    "Provider": "Proveedor",
+    "View": "Ver",
+    "All crops": "Todos los cultivos",
+    "Filter by disease...": "Filtrar por enfermedad...",
+    "Clear Filters": "Borrar filtros",
+    "Previous": "Anterior",
+    "Next": "Siguiente",
+    "Page": "Página",
+    "Showing": "Mostrando",
+    "of": "de",
+    "predictions": "predicciones",
+    "PENDING": "PENDIENTE",
+    "PENDING_REVIEW": "REVISIÓN PENDIENTE",
+    "REVIEWED": "VERIFICADO",
+    "Wheat": "Trigo",
+    "Rice": "Arroz",
+    "Tomato": "Tomate",
+    "Corn": "Maíz",
+    "Potato": "Papa",
+    "Cotton": "Algodón",
+    "Sugarcane": "Caña de azúcar",
+    "Soybean": "Soja",
+    "Mustard": "Mostaza",
+    "Groundnut": "Maní",
+    "Chilli": "Chile",
+    "mock": "Mock (Prueba)",
+    "gemini": "Google Gemini",
+    "groq": "Groq Llama 4",
+    "openai": "OpenAI GPT",
+    "Hidden": "Oculto",
+    "Healthy": "Saludable",
   }
 };
 
@@ -381,4 +517,37 @@ export function useApp() {
     throw new Error("useApp must be used within an AppProvider");
   }
   return context;
+}
+
+// Reusable dynamic translation component
+export function Translate({ text }: { text: string }) {
+  const { language, translateDynamic, t } = useApp();
+  const [translated, setTranslated] = useState(text);
+
+  useEffect(() => {
+    let active = true;
+
+    // 1. Check static dictionary first
+    const staticTrans = t(text);
+    if (staticTrans !== text) {
+      setTranslated(staticTrans);
+      return;
+    }
+
+    if (language === "en" || !text) {
+      setTranslated(text);
+      return;
+    }
+
+    // 2. Fetch from dynamic translate API
+    translateDynamic(text).then((res) => {
+      if (active) setTranslated(res);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [text, language, t, translateDynamic]);
+
+  return <>{translated}</>;
 }

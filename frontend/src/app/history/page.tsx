@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { listPredictions } from "@/lib/api";
 import type { PredictionListItem, PredictionListResponse } from "@/lib/types";
 import { CROP_TYPES } from "@/lib/types";
-import { useApp } from "@/context/AppContext";
+import { useApp, Translate } from "@/context/AppContext";
 import AuthPage from "@/components/AuthPage";
 
 function SeverityBadge({ severity, t }: { severity: string | null; t: any }) {
@@ -256,8 +256,8 @@ export default function HistoryPage() {
                         year: "numeric",
                       })}
                     </td>
-                    <td style={{ fontWeight: 600 }}>{t(item.crop_type)}</td>
-                    <td>{t(item.predicted_disease)}</td>
+                    <td style={{ fontWeight: 600 }}><Translate text={item.crop_type} /></td>
+                    <td><Translate text={item.predicted_disease} /></td>
                     <td><ConfidenceDisplay value={item.confidence} /></td>
                     <td><SeverityBadge severity={item.severity} t={t} /></td>
                     <td>
@@ -274,7 +274,7 @@ export default function HistoryPage() {
                       </span>
                     </td>
                     <td style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)", textTransform: "capitalize" }}>
-                      {t(item.ai_provider)}
+                      <Translate text={item.ai_provider} />
                     </td>
                     <td>
                       <Link
