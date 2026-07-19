@@ -57,9 +57,23 @@ def do_run_migrations(connection):
 
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode using async engine."""
+    db_url = config.get_main_option("sqlalchemy.url")
+    connect_args = {}
+    if "sslmode=" in db_url:
+        if "?" in db_url:
+            base_url, query = db_url.split("?", 1)
+            params = query.split("&")
+            filtered_params = [p for p in params if not p.startswith("sslmode=")]
+            if filtered_params:
+                db_url = f"{base_url}?{'&'.join(filtered_params)}"
+            else:
+                db_url = base_url
+        connect_args["ssl"] = True
+
     connectable = create_async_engine(
-        config.get_main_option("sqlalchemy.url"),
+        db_url,
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
 
     async with connectable.connect() as connection:
