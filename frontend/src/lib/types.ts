@@ -12,6 +12,9 @@ export interface Prediction {
   confidence: number;
   severity: string | null;
   recommendation: string | null;
+  possible_reasons?: string | null;
+  location?: string | null;
+  language?: string | null;
   status?: string;
   ai_provider: string;
   created_at: string;

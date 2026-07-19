@@ -42,7 +42,7 @@ export default function AuthPage() {
     }
   };
 
-  const handleFillDemo = (userType: "farmer" | "agronomist") => {
+  const handleFillDemo = (userType: "farmer" | "agronomist" | "admin") => {
     setUsername(userType);
     setPassword("password123");
   };
@@ -198,6 +198,7 @@ export default function AuthPage() {
               >
                 <option value="FARMER">{t("Farmer Profile")}</option>
                 <option value="AGRONOMIST">{t("Agronomist Profile")}</option>
+                <option value="ADMIN">{t("Admin Profile")}</option>
               </select>
             </div>
           )}
@@ -274,6 +275,25 @@ export default function AuthPage() {
               </span>
               <button
                 onClick={() => handleFillDemo("agronomist")}
+                style={{
+                  fontSize: "0.6875rem",
+                  padding: "0.125rem 0.375rem",
+                  borderRadius: "var(--radius-sm)",
+                  background: "var(--color-primary)",
+                  color: "white",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Auto-fill
+              </button>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--color-text-secondary)" }}>
+                🛠️ <strong>Admin:</strong> admin / password123
+              </span>
+              <button
+                onClick={() => handleFillDemo("admin")}
                 style={{
                   fontSize: "0.6875rem",
                   padding: "0.125rem 0.375rem",

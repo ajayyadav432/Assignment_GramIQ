@@ -147,18 +147,109 @@ export function getImageUrl(filename: string): string {
   return `${API_URL}/uploads/${filename}`;
 }
 
-// ─── CSV Export (Bonus) ────────────────────────────
+// ─── CSV/JSON/XML/PDF Export ───────────────────────
 
-export function getExportUrl(params?: {
-  crop_type?: string;
-  disease?: string;
-}): string {
+export async function downloadExport(
+  format: string,
+  params?: { crop_type?: string; disease?: string }
+): Promise<void> {
   const searchParams = new URLSearchParams();
+  searchParams.set("format", format);
   if (params?.crop_type) searchParams.set("crop_type", params.crop_type);
   if (params?.disease) searchParams.set("disease", params.disease);
 
-  const query = searchParams.toString();
-  return `${API_URL}/api/v1/predictions/export${query ? `?${query}` : ""}`;
+  const url = `${API_URL}/api/v1/predictions/export?${searchParams.toString()}`;
+  const token = localStorage.getItem("token");
+  const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const res = await fetch(url, { headers });
+  if (!res.ok) {
+    throw new ApiError(`Failed to export: ${res.statusText}`, res.status);
+  }
+
+  const blob = await res.blob();
+  const blobUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  const timestamp = new Date().toISOString().slice(0, 10);
+  a.download = `krishi_predictions_${timestamp}.${format}`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(blobUrl);
+}
+
+export async function downloadPdf(predictionId: string): Promise<void> {
+  const url = `${API_URL}/api/v1/predictions/${predictionId}/pdf`;
+  const token = localStorage.getItem("token");
+  const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const res = await fetch(url, { headers });
+  if (!res.ok) {
+    throw new ApiError(`Failed to download PDF: ${res.statusText}`, res.status);
+  }
+
+  const blob = await res.blob();
+  const blobUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = `krishi_advisory_${predictionId}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(blobUrl);
+}
+
+// ─── Comments & Community ──────────────────────────
+
+export interface CommentItem {
+  id: string;
+  prediction_id: string;
+  user_id: string;
+  content: string;
+  upvotes: number;
+  downvotes: number;
+  created_at: string;
+  username: string;
+  user_role: string;
+  user_vote: "upvote" | "downvote" | null;
+}
+
+export async function getComments(predictionId: string): Promise<CommentItem[]> {
+  const res = await fetch(`${API_URL}/api/v1/predictions/${predictionId}/comments`, {
+    headers: getHeaders(),
+  });
+  return handleResponse<CommentItem[]>(res);
+}
+
+export async function createComment(
+  predictionId: string,
+  content: string
+): Promise<CommentItem> {
+  const res = await fetch(`${API_URL}/api/v1/predictions/${predictionId}/comments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(),
+    },
+    body: JSON.stringify({ content }),
+  });
+  return handleResponse<CommentItem>(res);
+}
+
+export async function voteComment(
+  commentId: string,
+  voteType: "upvote" | "downvote"
+): Promise<CommentItem> {
+  const res = await fetch(`${API_URL}/api/v1/comments/${commentId}/vote`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getHeaders(),
+    },
+    body: JSON.stringify({ vote_type: voteType }),
+  });
+  return handleResponse<CommentItem>(res);
 }
 
 export { ApiError };

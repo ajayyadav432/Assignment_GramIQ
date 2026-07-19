@@ -385,6 +385,21 @@ async def seed_database():
             await session.refresh(agronomist)
             logger.info("Created seed user: agronomist (password: password123)")
 
+        # Admin
+        result = await session.execute(select(User).where(User.username == "admin"))
+        admin = result.scalar_one_or_none()
+        if not admin:
+            admin = User(
+                id=uuid.uuid4(),
+                username="admin",
+                password_hash=get_password_hash("password123"),
+                role="ADMIN"
+            )
+            session.add(admin)
+            await session.commit()
+            await session.refresh(admin)
+            logger.info("Created seed user: admin (password: password123)")
+
         # 2. Check if data already exists in predictions
         result = await session.execute(select(func.count(Prediction.id)))
         count = result.scalar() or 0

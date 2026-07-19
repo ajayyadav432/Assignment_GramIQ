@@ -8,13 +8,14 @@ import { useApp } from "@/context/AppContext";
 
 export default function UploadForm() {
   const router = useRouter();
-  const { t } = useApp();
+  const { t, language } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [cropType, setCropType] = useState("");
   const [aiProvider, setAiProvider] = useState("");
+  const [location, setLocation] = useState("");
   const [farmerNotes, setFarmerNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -77,6 +78,10 @@ export default function UploadForm() {
       if (aiProvider) {
         formData.append("ai_provider_name", aiProvider);
       }
+      if (location.trim()) {
+        formData.append("location", location.trim());
+      }
+      formData.append("language", language || "en");
 
       const prediction = await createPrediction(formData);
       router.push(`/predictions/${prediction.id}`);
@@ -200,6 +205,22 @@ export default function UploadForm() {
             </option>
           ))}
         </select>
+      </div>
+
+      {/* Location Input */}
+      <div style={{ marginBottom: "1.5rem" }}>
+        <label className="label" htmlFor="location">
+          {t("Location / Region")} <span className="label-hint">({t("optional")})</span>
+        </label>
+        <input
+          id="location"
+          type="text"
+          className="select"
+          style={{ background: "var(--color-bg)" }}
+          placeholder={t("e.g. Punjab, India")}
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+        />
       </div>
 
       {/* Farmer Notes */}

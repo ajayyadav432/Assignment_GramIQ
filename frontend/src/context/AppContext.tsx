@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 export interface UserProfile {
   id: string;
   username: string;
-  role: "FARMER" | "AGRONOMIST";
+  role: "FARMER" | "AGRONOMIST" | "ADMIN";
   token: string;
 }
 
@@ -429,7 +429,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setUser({
           id: decoded.id,
           username: decoded.username,
-          role: decoded.role as "FARMER" | "AGRONOMIST",
+          role: decoded.role as "FARMER" | "AGRONOMIST" | "ADMIN",
           token: storedToken,
         });
       } else {
@@ -446,7 +446,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setUser({
         id: decoded.id,
         username: decoded.username,
-        role: decoded.role as "FARMER" | "AGRONOMIST",
+        role: decoded.role as "FARMER" | "AGRONOMIST" | "ADMIN",
         token: token,
       });
     }

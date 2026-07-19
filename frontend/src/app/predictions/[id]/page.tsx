@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { getPrediction, getImageUrl } from "@/lib/api";
+import { getPrediction, getImageUrl, downloadPdf } from "@/lib/api";
 import type { Prediction } from "@/lib/types";
 import { useApp } from "@/context/AppContext";
 import AuthPage from "@/components/AuthPage";
@@ -60,6 +60,8 @@ export default function PredictionDetailPage() {
   const [transDisease, setTransDisease] = useState("");
   const [transRecommendation, setTransRecommendation] = useState("");
   const [transNotes, setTransNotes] = useState("");
+  const [transReasons, setTransReasons] = useState("");
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
     async function fetchPrediction() {
@@ -69,14 +71,16 @@ export default function PredictionDetailPage() {
         setPrediction(data);
         
         // Translate dynamic values
-        const [d, r, n] = await Promise.all([
+        const [d, r, n, pr] = await Promise.all([
           translateDynamic(data.predicted_disease),
           translateDynamic(data.recommendation || ""),
           translateDynamic(data.farmer_notes || ""),
+          translateDynamic(data.possible_reasons || ""),
         ]);
         setTransDisease(d);
         setTransRecommendation(r);
         setTransNotes(n);
+        setTransReasons(pr);
       } catch (err) {
         setError(err instanceof Error ? err.message : t("Failed to load prediction."));
       } finally {
@@ -151,10 +155,27 @@ export default function PredictionDetailPage() {
     <div className="page-container">
       <div style={{ maxWidth: "800px", margin: "0 auto" }}>
         {/* Breadcrumb */}
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
           <Link href="/history" style={{ color: "var(--color-primary)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 500 }}>
             ← {t("Back to History")}
           </Link>
+          <button
+            onClick={async () => {
+              setPdfLoading(true);
+              try {
+                await downloadPdf(id);
+              } catch (e) {
+                alert("Failed to download PDF advisory card");
+              } finally {
+                setPdfLoading(false);
+              }
+            }}
+            disabled={pdfLoading}
+            className="btn btn-primary"
+            style={{ padding: "0.5rem 1rem", fontSize: "0.8125rem" }}
+          >
+            📄 {pdfLoading ? t("Exporting...") : t("Export PDF Advisory")}
+          </button>
         </div>
 
         {/* Pending Review Warning Banner */}
@@ -199,6 +220,8 @@ export default function PredictionDetailPage() {
           </div>
           <p className="page-subtitle">
             {t(prediction.crop_type)} · {t("Analyzed on")} {formattedDate}
+            {prediction.location && ` · 📍 ${prediction.location}`}
+            {prediction.language && ` · 🌐 ${prediction.language}`}
           </p>
         </div>
 
@@ -246,11 +269,23 @@ export default function PredictionDetailPage() {
             </div>
           </div>
 
+          {/* Possible Reasons */}
+          {(prediction.possible_reasons || transReasons) && prediction.possible_reasons !== "Pending Review" && (
+            <div className="card" style={{ padding: "1.5rem", borderLeft: "4px solid #ffba08" }}>
+              <h3 style={{ fontWeight: 600, marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem", color: "#92400e" }}>
+                🔍 {t("Possible Reasons")}
+              </h3>
+              <p style={{ color: "var(--color-text-secondary)", lineHeight: 1.7 }}>
+                {transReasons || prediction.possible_reasons}
+              </p>
+            </div>
+          )}
+
           {/* Recommendation */}
           {(prediction.recommendation || transRecommendation) && (
             <div className="card" style={{ padding: "1.5rem" }}>
               <h3 style={{ fontWeight: 600, marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                💊 {t("Treatment Recommendation")}
+                💊 {prediction.status === "REVIEWED" ? t("Verified Advisory") : t("Treatment Recommendation")}
               </h3>
               <p style={{ color: "var(--color-text-secondary)", lineHeight: 1.7 }}>
                 {transRecommendation}
