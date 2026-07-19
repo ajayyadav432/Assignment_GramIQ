@@ -334,6 +334,10 @@ async def seed_database():
     """
     settings = get_settings()
     db_url = settings.DATABASE_URL
+    # Auto-upgrade dialect to asyncpg if standard postgresql is provided
+    if db_url.startswith("postgresql://"):
+        db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
     connect_args = {}
     if "sslmode=" in db_url:
         if "?" in db_url:
