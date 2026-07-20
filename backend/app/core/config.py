@@ -37,6 +37,7 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://frontend:3000",
         "http://127.0.0.1:3000",
+        "https://frontend-woad-mu-58.vercel.app",
     ]
 
     model_config = {
