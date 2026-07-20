@@ -138,67 +138,37 @@ export default function HomePage() {
 
   return (
     <div className="page-container" style={{ maxWidth: "1200px", margin: "0 auto", padding: "1rem" }}>
-      {/* Top Banner & Tab Navigation */}
+      {/* Page Header & Tabs */}
       <div
-        className="banner-header"
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: "2rem",
-          background: "var(--color-bg-card)",
-          padding: "1rem 1.5rem",
-          borderRadius: "var(--radius-lg)",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-          border: "1px solid var(--color-border-light)",
+          marginBottom: "1.5rem",
           flexWrap: "wrap",
-          gap: "1rem",
+          gap: "0.75rem",
         }}
       >
         <div>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--color-primary-dark)", margin: 0 }}>
-            🌾 Krishi Clinic Lite
-          </h1>
-          <p style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)", margin: "0.25rem 0 0 0" }}>
-            {t("Empowering farmers with AI diagnostics and agronomist verification.")}
-          </p>
+          <h1 className="page-title">💬 {t("Community Feed")}</h1>
+          <p className="page-subtitle">{t("Empowering farmers with AI diagnostics and agronomist verification.")}</p>
         </div>
 
         {/* Tab Toggle */}
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+        <div className="tab-bar">
           <button
             onClick={() => setActiveTab("feed")}
-            style={{
-              padding: "0.5rem 1rem",
-              borderRadius: "var(--radius-md)",
-              border: "none",
-              fontSize: "0.875rem",
-              fontWeight: 600,
-              cursor: "pointer",
-              backgroundColor: activeTab === "feed" ? "var(--color-primary)" : "transparent",
-              color: activeTab === "feed" ? "white" : "var(--color-text-secondary)",
-              transition: "all 0.2s ease",
-            }}
+            className={`tab-btn ${activeTab === "feed" ? "active" : ""}`}
           >
-            💬 {t("Community Feed")}
+            💬 {t("Feed")}
           </button>
 
           {(user.role === "ADMIN" || user.role === "AGRONOMIST") && (
             <button
               onClick={() => setActiveTab("admin")}
-              style={{
-                padding: "0.5rem 1rem",
-                borderRadius: "var(--radius-md)",
-                border: "none",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                cursor: "pointer",
-                backgroundColor: activeTab === "admin" ? "var(--color-primary)" : "transparent",
-                color: activeTab === "admin" ? "white" : "var(--color-text-secondary)",
-                transition: "all 0.2s ease",
-              }}
+              className={`tab-btn ${activeTab === "admin" ? "active" : ""}`}
             >
-              🛠️ {user.role === "ADMIN" ? t("Admin Bio Bank") : t("Agronomist DB")}
+              🛠️ {user.role === "ADMIN" ? t("Bio Bank") : t("Agro DB")}
             </button>
           )}
         </div>

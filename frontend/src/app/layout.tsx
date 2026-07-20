@@ -26,12 +26,8 @@ export default function RootLayout({
       <body>
         <AppProvider>
           <div className="app-shell">
-            {/* Persistent sidebar (desktop) */}
             <Sidebar />
-            {/* Main content area */}
-            <main className="app-main" style={{ paddingTop: "0" }}>
-              {/* On mobile the topbar is fixed — push content below it */}
-              <div className="mobile-topbar-spacer" style={{ height: 0 }} />
+            <main className="app-main">
               {children}
             </main>
           </div>
