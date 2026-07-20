@@ -217,7 +217,12 @@ class PredictionService:
             for row in disease_result.all()
         ]
 
-        # Daily volume (last 7 days)
+        # Daily volume (last 7 days) - pre-populate with 0 to ensure continuous time series chart
+        daily_map = {}
+        for i in range(7):
+            d = (datetime.now(timezone.utc) - timedelta(days=i)).date()
+            daily_map[str(d)] = 0
+
         seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
         daily_result = await self._db.execute(
             select(
@@ -228,9 +233,15 @@ class PredictionService:
             .group_by(func.date(Prediction.created_at))
             .order_by(func.date(Prediction.created_at))
         )
+        
+        for row in daily_result.all():
+            date_str = str(row.date)
+            if date_str in daily_map:
+                daily_map[date_str] = row.count
+
         daily_volume = [
-            {"date": str(row.date), "count": row.count}
-            for row in daily_result.all()
+            {"date": d_str, "count": count}
+            for d_str, count in sorted(daily_map.items())
         ]
 
         # Severity distribution

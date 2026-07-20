@@ -106,6 +106,7 @@ export async function listPredictions(params?: {
 
   const res = await fetch(url, {
     headers: getHeaders(),
+    cache: "no-store",
   });
   return handleResponse<PredictionListResponse>(res);
 }
@@ -113,6 +114,7 @@ export async function listPredictions(params?: {
 export async function getPrediction(id: string): Promise<Prediction> {
   const res = await fetch(`${API_URL}/api/v1/predictions/${id}`, {
     headers: getHeaders(),
+    cache: "no-store",
   });
   return handleResponse<Prediction>(res);
 }
@@ -137,6 +139,7 @@ export async function reviewPrediction(
 export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
   const res = await fetch(`${API_URL}/api/v1/analytics/summary`, {
     headers: getHeaders(),
+    cache: "no-store",
   });
   return handleResponse<AnalyticsSummary>(res);
 }
@@ -225,6 +228,7 @@ export interface CommentItem {
 export async function getComments(predictionId: string): Promise<CommentItem[]> {
   const res = await fetch(`${API_URL}/api/v1/predictions/${predictionId}/comments`, {
     headers: getHeaders(),
+    cache: "no-store",
   });
   return handleResponse<CommentItem[]>(res);
 }
