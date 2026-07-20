@@ -303,25 +303,26 @@ export default function HomePage() {
                 }}
               />
 
-              <button
-                onClick={() => {
-                  setSearchQuery("");
-                  setSelectedCrop("");
-                  setSelectedStatus("");
-                  setSelectedLocation("");
-                }}
-                style={{
-                  padding: "0.5rem 1rem",
-                  borderRadius: "var(--radius-sm)",
-                  border: "none",
-                  background: "var(--color-bg-secondary)",
-                  color: "var(--color-text)",
-                  fontSize: "0.8125rem",
-                  cursor: "pointer",
-                }}
-              >
-                Reset
-              </button>
+              {/* Clear Filters (Conditional) */}
+              {(searchQuery || selectedCrop || selectedStatus || selectedLocation) && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedCrop("");
+                    setSelectedStatus("");
+                    setSelectedLocation("");
+                  }}
+                  className="btn btn-secondary"
+                  style={{
+                    padding: "0.4rem 0.875rem",
+                    fontSize: "0.75rem",
+                    borderRadius: "var(--radius-sm)",
+                    cursor: "pointer",
+                  }}
+                >
+                  🧹 {t("Clear Filters")}
+                </button>
+              )}
             </div>
 
             {/* Posts Stream */}
@@ -524,22 +525,24 @@ export default function HomePage() {
                 <option key={crop} value={crop}>{t(crop)}</option>
               ))}
             </select>
-            <button
-              onClick={() => {
-                setAdminSearch("");
-                setAdminCrop("");
-              }}
-              style={{
-                padding: "0.5rem 1rem",
-                fontSize: "0.8125rem",
-                border: "none",
-                borderRadius: "var(--radius-sm)",
-                background: "var(--color-border-light)",
-                cursor: "pointer",
-              }}
-            >
-              Reset
-            </button>
+            {/* Clear Filters (Conditional) */}
+            {(adminSearch || adminCrop) && (
+              <button
+                onClick={() => {
+                  setAdminSearch("");
+                  setAdminCrop("");
+                }}
+                className="btn btn-secondary"
+                style={{
+                  padding: "0.4rem 0.875rem",
+                  fontSize: "0.75rem",
+                  borderRadius: "var(--radius-sm)",
+                  cursor: "pointer",
+                }}
+              >
+                🧹 {t("Clear Filters")}
+              </button>
+            )}
           </div>
 
           {/* Admin Table */}

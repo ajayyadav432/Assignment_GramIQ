@@ -66,6 +66,21 @@ const CALENDAR_DATA: Record<string, CalendarEvent[]> = {
   ]
 };
 
+const RECOMMENDED_CROPS: Record<string, string[]> = {
+  January: ["Wheat", "Mustard", "Potato", "Barley", "Spinach"],
+  February: ["Sunflower", "Cucumber", "Melon", "Okra", "Bitter Gourd"],
+  March: ["Chilli", "Tomato", "Okra", "Cowpea", "Bitter Gourd"],
+  April: ["Sugarcane", "Corn", "Cotton", "Watermelon", "Cucumber"],
+  May: ["Cotton", "Groundnut", "Pigeon Pea", "Soybean", "Turmeric"],
+  June: ["Rice", "Corn", "Soybean", "Groundnut", "Pigeon Pea"],
+  July: ["Rice", "Tomato", "Chilli", "Soybean", "Okra", "Corn"],
+  August: ["Cauliflower", "Rice", "Soybean", "Carrot", "Radish"],
+  September: ["Onion", "Garlic", "Mustard", "Cabbage", "Potato"],
+  October: ["Wheat", "Potato", "Mustard", "Chickpea", "Barley"],
+  November: ["Wheat", "Onion", "Spinach", "Fenugreek", "Mustard"],
+  December: ["Tomato", "Chilli", "Coriander", "Cumin", "Wheat"]
+};
+
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
@@ -132,6 +147,36 @@ export default function CropCalendarPage() {
             >
               {t(month)}
             </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Recommended Crops to Sow/Plant Card */}
+      <div className="card" style={{ padding: "1.25rem", marginBottom: "1.5rem", background: "var(--color-bg-secondary)", borderLeft: "4px solid var(--color-primary)" }}>
+        <h3 style={{ fontSize: "0.9375rem", fontWeight: 700, color: "var(--color-primary-dark)", marginBottom: "0.5rem" }}>
+          🌱 {t("Recommended Crops to Sow / Plant in")} {t(selectedMonth)}:
+        </h3>
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
+          {(RECOMMENDED_CROPS[selectedMonth] || []).map((crop) => (
+            <span
+              key={crop}
+              style={{
+                padding: "0.375rem 0.75rem",
+                borderRadius: "var(--radius-md)",
+                background: "white",
+                color: "var(--color-text-secondary)",
+                fontSize: "0.8125rem",
+                fontWeight: 600,
+                border: "1px solid var(--color-border)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.375rem",
+                boxShadow: "var(--shadow-xs)"
+              }}
+            >
+              <span>{crop === "Rice" ? "🌾" : crop === "Wheat" ? "🌾" : crop === "Tomato" ? "🍅" : crop === "Potato" ? "🥔" : crop === "Chilli" ? "🌶️" : "🌱"}</span>
+              {t(crop)}
+            </span>
           ))}
         </div>
       </div>
