@@ -43,14 +43,16 @@ function StatCard({
 export default function AnalyticsPage() {
   const { user, isInitialized, t } = useApp();
   const [data, setData] = useState<AnalyticsSummary | null>(null);
+  const [selectedCrop, setSelectedCrop] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchAnalytics() {
       if (!user) return;
+      setLoading(true);
       try {
-        const summary = await getAnalyticsSummary();
+        const summary = await getAnalyticsSummary(selectedCrop || undefined);
         setData(summary);
       } catch (err) {
         setError(err instanceof Error ? err.message : t("Failed to load analytics."));
@@ -61,7 +63,7 @@ export default function AnalyticsPage() {
     if (user) {
       fetchAnalytics();
     }
-  }, [user]);
+  }, [user, selectedCrop]);
 
   if (!isInitialized) {
     return (
@@ -111,11 +113,44 @@ export default function AnalyticsPage() {
   return (
     <div className="page-container">
       {/* Header */}
-      <div className="page-header">
-        <h1 className="page-title">📊 {t("Analytics Dashboard")}</h1>
-        <p className="page-subtitle">
-          {t("Aggregated insights from crop disease predictions.")}
-        </p>
+      <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem", marginBottom: "2rem" }}>
+        <div>
+          <h1 className="page-title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span>📊</span> {t("Analytics Dashboard")}
+          </h1>
+          <p className="page-subtitle" style={{ margin: "0.25rem 0 0 0" }}>
+            {t("Aggregated insights from crop disease predictions.")}
+          </p>
+        </div>
+
+        {/* Crop Selector Filter */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text-secondary)" }}>
+            🌾 {t("Filter by Crop")}:
+          </span>
+          <select
+            value={selectedCrop}
+            onChange={(e) => setSelectedCrop(e.target.value)}
+            style={{
+              padding: "0.5rem 1rem",
+              borderRadius: "var(--radius-md)",
+              border: "1.5px solid var(--color-border)",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              background: "var(--color-bg-card)",
+              color: "var(--color-text)",
+              cursor: "pointer",
+              outline: "none",
+              minWidth: "150px",
+              boxShadow: "var(--shadow-sm)",
+            }}
+          >
+            <option value="">{t("All Crops")}</option>
+            {["Wheat", "Rice", "Tomato", "Corn", "Potato", "Cotton", "Sugarcane", "Soybean", "Mustard", "Groundnut", "Chilli"].map((crop) => (
+              <option key={crop} value={crop}>{t(crop)}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Summary Stats */}

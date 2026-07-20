@@ -136,8 +136,12 @@ export async function reviewPrediction(
 
 // ─── Analytics ─────────────────────────────────────
 
-export async function getAnalyticsSummary(): Promise<AnalyticsSummary> {
-  const res = await fetch(`${API_URL}/api/v1/analytics/summary`, {
+export async function getAnalyticsSummary(cropType?: string): Promise<AnalyticsSummary> {
+  const url = new URL(`${API_URL}/api/v1/analytics/summary`);
+  if (cropType) {
+    url.searchParams.set("crop_type", cropType);
+  }
+  const res = await fetch(url.toString(), {
     headers: getHeaders(),
     cache: "no-store",
   });

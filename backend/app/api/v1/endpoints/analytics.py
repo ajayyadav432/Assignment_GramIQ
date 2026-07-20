@@ -4,7 +4,7 @@ Analytics endpoint — aggregated dashboard statistics.
 All aggregation is performed via SQL (not in Python) for efficiency.
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.base import AIProvider
@@ -23,6 +23,7 @@ router = APIRouter()
     description="Aggregated statistics for the analytics dashboard.",
 )
 async def get_analytics_summary(
+    crop_type: str = Query(None, description="Optional crop type to filter by"),
     db: AsyncSession = Depends(get_db),
     ai_provider: AIProvider = Depends(get_ai_provider),
     storage: StorageProvider = Depends(get_storage_provider),
@@ -34,5 +35,5 @@ async def get_analytics_summary(
     All aggregation uses SQL GROUP BY — no full-table scans in Python.
     """
     service = PredictionService(db, ai_provider, storage)
-    summary = await service.get_analytics_summary()
+    summary = await service.get_analytics_summary(crop_type=crop_type)
     return AnalyticsSummaryResponse(**summary)

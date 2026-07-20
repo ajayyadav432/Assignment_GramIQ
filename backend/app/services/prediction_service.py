@@ -183,28 +183,30 @@ class PredictionService:
 
         return predictions, total
 
-    async def get_analytics_summary(self) -> dict:
+    async def get_analytics_summary(self, crop_type: str | None = None) -> dict:
         """
-        Compute aggregated analytics for the dashboard.
+        Compute aggregated analytics for the dashboard, optionally filtered by crop type.
 
         Returns disease distribution, daily volume (last 7 days),
         severity breakdown, average confidence, and total count.
         All computed via SQL aggregation for efficiency.
         """
         # Total predictions
-        total_result = await self._db.execute(
-            select(func.count(Prediction.id))
-        )
+        total_query = select(func.count(Prediction.id))
+        if crop_type:
+            total_query = total_query.where(Prediction.crop_type == crop_type)
+        total_result = await self._db.execute(total_query)
         total = total_result.scalar() or 0
 
         # Average confidence
-        avg_result = await self._db.execute(
-            select(func.avg(Prediction.confidence))
-        )
+        avg_query = select(func.avg(Prediction.confidence))
+        if crop_type:
+            avg_query = avg_query.where(Prediction.crop_type == crop_type)
+        avg_result = await self._db.execute(avg_query)
         avg_confidence = round(float(avg_result.scalar() or 0), 3)
 
         # Disease distribution (GROUP BY)
-        disease_result = await self._db.execute(
+        disease_query = (
             select(
                 Prediction.predicted_disease,
                 func.count(Prediction.id).label("count"),
@@ -212,6 +214,9 @@ class PredictionService:
             .group_by(Prediction.predicted_disease)
             .order_by(func.count(Prediction.id).desc())
         )
+        if crop_type:
+            disease_query = disease_query.where(Prediction.crop_type == crop_type)
+        disease_result = await self._db.execute(disease_query)
         disease_distribution = [
             {"disease": row.predicted_disease, "count": row.count}
             for row in disease_result.all()
@@ -224,7 +229,7 @@ class PredictionService:
             daily_map[str(d)] = 0
 
         seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
-        daily_result = await self._db.execute(
+        daily_query = (
             select(
                 func.date(Prediction.created_at).label("date"),
                 func.count(Prediction.id).label("count"),
@@ -233,6 +238,9 @@ class PredictionService:
             .group_by(func.date(Prediction.created_at))
             .order_by(func.date(Prediction.created_at))
         )
+        if crop_type:
+            daily_query = daily_query.where(Prediction.crop_type == crop_type)
+        daily_result = await self._db.execute(daily_query)
         
         for row in daily_result.all():
             date_str = str(row.date)
@@ -245,7 +253,7 @@ class PredictionService:
         ]
 
         # Severity distribution
-        severity_result = await self._db.execute(
+        severity_query = (
             select(
                 Prediction.severity,
                 func.count(Prediction.id).label("count"),
@@ -253,17 +261,23 @@ class PredictionService:
             .where(Prediction.severity.isnot(None))
             .group_by(Prediction.severity)
         )
+        if crop_type:
+            severity_query = severity_query.where(Prediction.crop_type == crop_type)
+        severity_result = await self._db.execute(severity_query)
         severity_distribution = {
             row.severity: row.count for row in severity_result.all()
         }
 
         # Top crop type
-        top_crop_result = await self._db.execute(
+        top_crop_query = (
             select(Prediction.crop_type)
             .group_by(Prediction.crop_type)
             .order_by(func.count(Prediction.id).desc())
             .limit(1)
         )
+        if crop_type:
+            top_crop_query = top_crop_query.where(Prediction.crop_type == crop_type)
+        top_crop_result = await self._db.execute(top_crop_query)
         top_crop = top_crop_result.scalar_one_or_none()
 
         return {
