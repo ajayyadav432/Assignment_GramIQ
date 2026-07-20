@@ -194,9 +194,9 @@ async def get_current_farmer(
 ) -> User:
     """
     Verify the logged-in user is a FARMER.
-    Agronomists are treated as superusers and can also access farmer actions.
+    Agronomists and Admins are treated as superusers and can also access farmer actions.
     """
-    if current_user.role not in {"FARMER", "AGRONOMIST"}:
+    if current_user.role not in {"FARMER", "AGRONOMIST", "ADMIN"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Operation restricted to Farmers."

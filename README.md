@@ -3,6 +3,7 @@
 > AI-powered crop disease diagnosis dashboard — built for India's agricultural intelligence platform.
 
 ### 🌐 Live Production Demo: **[frontend-woad-mu-58.vercel.app](https://frontend-woad-mu-58.vercel.app)**
+### 📄 Google Docs Product Documentation: **[Google Doc Link](https://docs.google.com/document/d/1QrMX1ZR9vHQMWGVhREGGvfzNoql8NK6Ca_ba4616hmE/edit?tab=t.0#heading=h.z333nsye6gip)**
 
 ![CI](https://github.com/ajayyadav432/Assignment_GramIQ/actions/workflows/ci.yml/badge.svg)
 
