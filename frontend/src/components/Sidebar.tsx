@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: "/",          icon: "🏠", label: "Dashboard" },
   { href: "/history",   icon: "📋", label: "My Reports" },
   { href: "/analytics", icon: "📊", label: "Analytics" },
+  { href: "/calendar",  icon: "📅", label: "Crop Calendar" },
 ];
 
 const AGRO_ITEMS = [
