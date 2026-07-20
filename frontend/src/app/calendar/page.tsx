@@ -181,30 +181,7 @@ export default function CropCalendarPage() {
         </div>
       </div>
 
-      {/* Alert Warning Box for Season-Specific Emergencies */}
-      {currentSeason === "Kharif (Monsoon)" && (
-        <div
-          style={{
-            background: "#fee2e2",
-            border: "1px solid #fecaca",
-            color: "#991b1b",
-            borderRadius: "var(--radius-lg)",
-            padding: "1rem 1.25rem",
-            marginBottom: "1.5rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.75rem",
-          }}
-        >
-          <span style={{ fontSize: "1.5rem" }}>⚠️</span>
-          <div>
-            <strong style={{ display: "block", fontSize: "0.875rem" }}>{t("Monsoon Disease Advisory Alert!")}</strong>
-            <span style={{ fontSize: "0.8125rem", opacity: 0.9 }}>
-              {t("High humidity and rainfall increase risk of Rice Blast, Late Blight in Tomato, and Root Rot. Ensure clearing of drainage systems immediately.")}
-            </span>
-          </div>
-        </div>
-      )}
+
 
       {/* Filters & Actions */}
       <div
@@ -286,6 +263,31 @@ export default function CropCalendarPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Alert Warning Box for Season-Specific Emergencies */}
+      {currentSeason === "Kharif (Monsoon)" && (
+        <div
+          style={{
+            background: "#fee2e2",
+            border: "1px solid #fecaca",
+            color: "#991b1b",
+            borderRadius: "var(--radius-lg)",
+            padding: "1rem 1.25rem",
+            marginTop: "2rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+          }}
+        >
+          <span style={{ fontSize: "1.5rem" }}>⚠️</span>
+          <div>
+            <strong style={{ display: "block", fontSize: "0.875rem" }}>{t("Monsoon Disease Advisory Alert!")}</strong>
+            <span style={{ fontSize: "0.8125rem", opacity: 0.9 }}>
+              {t("High humidity and rainfall increase risk of Rice Blast, Late Blight in Tomato, and Root Rot. Ensure clearing of drainage systems immediately.")}
+            </span>
+          </div>
         </div>
       )}
     </div>

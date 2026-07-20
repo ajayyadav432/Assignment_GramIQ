@@ -96,7 +96,7 @@ def _build_provider(provider_name: str) -> AIProvider:
         return FallbackAIProvider(primary, MockProvider())
 
     if provider_name == "local":
-        return LocalPyTorchProvider()
+        return FallbackAIProvider(LocalPyTorchProvider(), MockProvider())
 
     # Default to mock — safe for development and CI
     return MockProvider()

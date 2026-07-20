@@ -22,12 +22,12 @@ Krishi Clinic Lite is a streamlined crop disease advisory pipeline that enables 
                       │ (Interface) │
                       └─────────────┘
                             │
-         ┌──────────────────┼──────────────────┐
-         ▼                  ▼                  ▼
-   ┌───────────┐      ┌───────────┐      ┌───────────┐
-   │  Gemini   │      │   Groq    │      │   Mock    │
-   │ Provider  │      │ Provider  │      │ Provider  │
-   └───────────┘      └───────────┘      └───────────┘
+          ┌─────────────┬─────────────┬─────────────┬─────────────┐
+          ▼             ▼             ▼             ▼             ▼
+    ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐
+    │  Gemini   │ │   Groq    │ │  OpenAI   │ │   Local   │ │   Mock    │
+    │ Provider  │ │ Provider  │ │ Provider  │ │  PyTorch  │ │ Provider  │
+    └───────────┘ └───────────┘ └───────────┘ └───────────┘ └───────────┘
 ```
 
 ## Tech Stack
@@ -37,7 +37,7 @@ Krishi Clinic Lite is a streamlined crop disease advisory pipeline that enables 
 | **Frontend** | Next.js 14 (TypeScript) + Tailwind CSS | App Router, SSR/CSR flexibility, type safety |
 | **Backend** | FastAPI (Python 3.12) | Async-first, Pydantic V2 validation, auto OpenAPI docs |
 | **Database** | PostgreSQL 15 + SQLAlchemy 2.0 + Alembic | ACID compliance, async via asyncpg, version-controlled migrations |
-| **AI** | Google Gemini / Groq / OpenAI / Mock | 4 swappable implementations via ABC + dependency injection |
+| **AI** | Gemini / Groq / OpenAI / Local PyTorch / Mock | 5 swappable implementations via ABC + dependency injection |
 | **DevOps** | Docker Compose + GitHub Actions | Single-command deployment, automated CI pipeline |
 | **Charts** | Recharts | Declarative React charts, SSR-safe via dynamic imports |
 
@@ -87,9 +87,17 @@ AI_PROVIDER=groq
 GROQ_API_KEY=your_groq_api_key
 ```
 
+### Using the Local PyTorch AI Provider (Offline Deep Learning)
+
+```bash
+# In your .env file:
+AI_PROVIDER=local
+```
+No API keys are required. The first request will automatically download the fine-tuned EfficientNetV2-S model weights and metadata from the Hugging Face Hub (cached under `backend/app/ai/weights/`). All subsequent predictions run completely offline on CPU/GPU.
+
 ### Per-Request Model Override
 
-The frontend features an **AI Model** dropdown selector. This allows you to explicitly route any individual prediction request to **Gemini, Groq, or Mock** at runtime, demonstrating the live swappable architecture.
+The frontend features an **AI Model** dropdown selector. This allows you to explicitly route any individual prediction request to **Gemini, Groq, OpenAI, Local PyTorch, or Mock** at runtime, demonstrating the live swappable architecture.
 
 ## API Endpoints
 
@@ -191,12 +199,23 @@ npm install
 npm run dev
 ```
 
+## Key Product Engineering Features
+
+### 🔐 JWT Authentication & Expert Review Workflow
+We implemented a complete role-based workflow:
+* **Roles:** `FARMER`, `AGRONOMIST`, `ADMIN` (passwords hashed using `bcrypt` in the DB).
+* **Expert Review Masking:** Standard crop uploads from farmers go into the `PENDING_REVIEW` state. The API masks raw AI predicted disease and confidence levels with localized "Pending expert review" messages for farmers.
+* **Agronomist Portal:** Agronomists can log in (username: `agronomist`, password: `password123`) to view raw AI predictions and confidence scores, verify the crop disease, customize advisory notes, and confirm the diagnosis. Once verified, the status becomes `REVIEWED` and the final verified advice is unlocked for the farmer.
+
+### 🗺️ Interactive State-Level India Heatmap
+* Overhauled the simple vector outline with a precise, interactive vector map of India's states utilizing the `@svg-maps/india` package.
+* When clicking on active disease outbreak indicators, the corresponding Indian states (e.g., Punjab, Maharashtra, Andhra/Telangana) dynamically highlight in green using smooth CSS transitions.
+
 ## Known Limitations & Future Improvements
 
-- **Image Storage**: Currently uses local filesystem. The `StorageProvider` interface is ready for S3 migration.
-- **Authentication**: No auth implemented — would add JWT via FastAPI's `Security` dependencies.
-- **Caching**: Analytics queries could benefit from Redis caching for high-traffic scenarios.
-- **Image Processing**: Large images are passed directly to the AI provider — adding server-side resizing would reduce latency and costs.
+- **Image Storage**: Currently uses local filesystem storage. The `StorageProvider` abstract class is fully defined and ready to support S3/GCS.
+- **Caching**: The analytics summary endpoint queries PostgreSQL directly; in a high-traffic environment, caching aggregations in Redis would be implemented.
+- **Image Processing**: Large images are passed directly to PyTorch/AI APIs; adding server-side image resizing and compression would improve latency.
 
 ## License
 

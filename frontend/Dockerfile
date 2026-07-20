@@ -2,11 +2,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install dependencies
-COPY package*.json ./
-RUN npm ci
-
-# Copy application code
+# Copy application code (including node_modules)
 COPY . .
 
 EXPOSE 3000

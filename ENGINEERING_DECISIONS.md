@@ -24,6 +24,7 @@ graph TB
             Fallback["FallbackAIProvider<br/>(primary → fallback)"]
             Gemini["GeminiProvider<br/>google-genai SDK"]
             Groq["GroqProvider<br/>Groq REST API"]
+            LocalPT["LocalPyTorchProvider<br/>EfficientNetV2 Offline"]
             Mock["MockProvider<br/>Deterministic"]
             OpenAI_P["OpenAIProvider<br/>OpenAI SDK"]
         end
@@ -56,6 +57,7 @@ graph TB
     Fallback -->|"primary"| Gemini
     Fallback -->|"primary"| Groq
     Fallback -->|"primary"| OpenAI_P
+    Fallback -->|"primary"| LocalPT
     Fallback -->|"fallback"| Mock
     Base --> Mock
 
@@ -72,7 +74,7 @@ graph TB
 
     class UI,Pages,API_Proxy frontend
     class Routes,Service backend
-    class Base,Fallback,Gemini,Groq,Mock,OpenAI_P ai
+    class Base,Fallback,Gemini,Groq,Mock,OpenAI_P,LocalPT ai
     class PG,Alembic db
     class Lint,Test,Build ci
 ```
@@ -110,9 +112,11 @@ User Upload → Next.js Frontend → FastAPI Backend → AI Provider → Postgre
 **Decision**: Define an `AIProvider` ABC with a `PredictionResult` Pydantic model as the contract, injected via FastAPI's `Depends()`.
 
 **Rationale**: This is the single most evaluated architectural component. The assignment states AI logic "must sit behind a clean, swappable interface." My implementation ensures:
-- Switching from `MockProvider` to `GeminiProvider` requires changing only `AI_PROVIDER=gemini` in `.env`
+- Switching from `MockProvider` to `GeminiProvider` or `LocalPyTorchProvider` requires changing only `AI_PROVIDER` in `.env`
 - Zero code changes to routes, services, schemas, or frontend
 - CI runs with `MockProvider` — no API keys needed in GitHub Actions
+
+**Offline Deep Learning Inference (Local PyTorch)**: We designed and integrated `LocalPyTorchProvider` implementing the same `AIProvider` contract. It runs local image preprocessing and forwards passes on an `EfficientNetV2-S` model. Model weights and metadata are automatically pulled and cached from the Hugging Face Hub (cached under `backend/app/ai/weights/`). To optimize the Docker image size and deployment speeds, we configured a CPU-only PyTorch build inside the backend container. This ensures edge inference capability that functions completely offline without external network dependency.
 
 **Alternative considered**: Python `Protocol` instead of ABC. Protocols offer structural subtyping (duck typing), which is more Pythonic. I chose ABC because it provides explicit error messages when a method is missing, which is more helpful for developers unfamiliar with the codebase.
 

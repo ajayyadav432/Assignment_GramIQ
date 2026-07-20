@@ -31,6 +31,19 @@ export default function Sidebar() {
     ...(user?.role === "AGRONOMIST" || user?.role === "ADMIN" ? AGRO_ITEMS : []),
   ];
 
+  if (!user) {
+    return (
+      <style dangerouslySetInnerHTML={{ __html: `
+        .app-main {
+          margin-left: 0 !important;
+        }
+        .mobile-topbar {
+          display: none !important;
+        }
+      `}} />
+    );
+  }
+
   return (
     <>
       {/* ── Mobile top bar (hidden on ≥769px via CSS) ── */}
