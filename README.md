@@ -219,6 +219,22 @@ We implemented a complete role-based workflow:
 - **Caching**: The analytics summary endpoint queries PostgreSQL directly; in a high-traffic environment, caching aggregations in Redis would be implemented.
 - **Image Processing**: Large images are passed directly to PyTorch/AI APIs; adding server-side image resizing and compression would improve latency.
 
+## Screenshots
+
+Here are screenshots of the dashboard in action:
+
+#### 💬 Community Feed (Main Dashboard)
+![Community Feed](docs/images/feed_page.png)
+
+#### 📋 Prediction History (Search & Filters)
+![Prediction History](docs/images/history_page.png)
+
+#### 📊 Analytics Dashboard (Dynamic Charts & Vector Heatmap)
+![Analytics Dashboard](docs/images/analytics_page.png)
+
+#### 🔬 Prediction Detail (Advisories & Recovery logs)
+![Prediction Detail](docs/images/prediction_detail.png)
+
 ## License
 
 This project was built as a technical assignment for GramIQ's Product Engineering Internship.
