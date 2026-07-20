@@ -43,16 +43,24 @@ export default function HeatmapChart() {
           justifyContent: "center",
         }}
       >
-        {/* Simple SVG outline representative of India agricultural regions */}
+        {/* Clean, recognizable SVG outline of the map of India */}
         <svg
           viewBox="0 0 400 500"
-          style={{ width: "90%", height: "90%", opacity: 0.85 }}
+          style={{ width: "95%", height: "95%", opacity: 0.9 }}
         >
-          {/* Background Map Graphic representation */}
+          {/* Detailed, recognizable path representing India's geography */}
           <path
-            d="M 170 80 Q 200 40 230 80 T 260 150 T 290 200 T 320 220 T 300 280 T 250 320 T 200 380 T 160 460 T 140 440 T 170 380 T 150 340 T 100 300 T 80 250 T 90 200 T 130 150 Z"
+            d="M 155 40 
+               L 165 42 L 170 30 L 175 35 L 180 50 L 195 55 L 205 60 L 200 70 L 185 85 L 185 95 L 195 105 L 205 110 L 220 115 
+               L 235 125 L 245 130 L 260 135 L 280 145 L 290 145 L 295 155 L 305 155 L 315 145 L 330 150 L 335 160 L 330 170 
+               L 320 175 L 315 185 L 320 195 L 335 195 L 345 190 L 350 200 L 340 210 L 325 210 L 310 205 L 300 210 L 295 220 
+               L 300 230 L 305 235 L 295 240 L 285 240 L 275 235 L 265 245 L 260 260 L 265 270 L 270 280 L 260 295 L 250 310 
+               L 240 330 L 235 350 L 230 370 L 220 390 L 205 420 L 198 440 L 195 455 L 190 460 L 185 450 L 182 430 L 180 410 
+               L 175 390 L 170 370 L 165 350 L 155 330 L 145 310 L 140 290 L 142 270 L 135 255 L 125 245 L 115 240 L 105 240 
+               L 95 235 L 85 238 L 82 245 L 75 245 L 80 230 L 95 225 L 105 210 L 112 195 L 118 190 L 130 195 L 138 185 L 138 175 
+               L 130 165 L 135 155 L 142 145 L 148 135 L 148 120 L 145 110 L 150 100 L 148 90 L 150 80 L 158 75 Z"
             fill="#dcedc8"
-            stroke="#a1887f"
+            stroke="#795548"
             strokeWidth="1.5"
           />
           {/* Region Bubbles mapped onto coordinates */}
