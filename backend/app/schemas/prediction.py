@@ -41,6 +41,11 @@ class PredictionResponse(BaseModel):
     location: str | None = None
     language: str | None = None
 
+    # Follow-up image comparison fields
+    after_image_filename: str | None = None
+    after_notes: str | None = None
+    after_uploaded_at: datetime | None = None
+
     model_config = ConfigDict(from_attributes=True)
 
 

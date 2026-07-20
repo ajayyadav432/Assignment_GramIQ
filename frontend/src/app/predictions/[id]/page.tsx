@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { getPrediction, getImageUrl, downloadPdf } from "@/lib/api";
+import { getPrediction, getImageUrl, downloadPdf, uploadFollowup } from "@/lib/api";
 import type { Prediction } from "@/lib/types";
 import { useApp } from "@/context/AppContext";
 import AuthPage from "@/components/AuthPage";
@@ -62,6 +62,29 @@ export default function PredictionDetailPage() {
   const [transNotes, setTransNotes] = useState("");
   const [transReasons, setTransReasons] = useState("");
   const [pdfLoading, setPdfLoading] = useState(false);
+
+  // Follow-up uploader states
+  const [followupFile, setFollowupFile] = useState<File | null>(null);
+  const [followupNotes, setFollowupNotes] = useState("");
+  const [followupLoading, setFollowupLoading] = useState(false);
+  const [followupError, setFollowupError] = useState<string | null>(null);
+
+  const handleFollowupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!followupFile) return;
+    setFollowupLoading(true);
+    setFollowupError(null);
+    try {
+      const updated = await uploadFollowup(id, followupFile, followupNotes);
+      setPrediction(updated);
+      setFollowupFile(null);
+      setFollowupNotes("");
+    } catch (err: any) {
+      setFollowupError(err?.detail?.message || err?.message || "Failed to upload follow-up image");
+    } finally {
+      setFollowupLoading(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchPrediction() {
@@ -226,23 +249,71 @@ export default function PredictionDetailPage() {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "1.5rem" }}>
-          {/* Image Card */}
+          {/* Image Comparison / Progress Tracking */}
           {prediction.image_filename && (
-            <div className="card" style={{ overflow: "hidden" }}>
-              <img
-                src={getImageUrl(prediction.image_filename)}
-                alt={`${prediction.crop_type} sample`}
-                style={{
-                  width: "100%",
-                  maxHeight: "400px",
-                  objectFit: "contain",
-                  background: "#f8f9fa",
-                }}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-            </div>
+            prediction.after_image_filename ? (
+              <div className="card" style={{ padding: "1.25rem" }}>
+                <h3 style={{ fontWeight: 600, marginBottom: "1rem", fontSize: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  📷 {t("Recovery Tracker (Before vs After)")}
+                </h3>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }} className="results-grid">
+                  {/* Before Panel */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--color-danger)", textTransform: "uppercase" }}>
+                      🔴 {t("Before Treatment")}
+                    </span>
+                    <div style={{ overflow: "hidden", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)" }}>
+                      <img
+                        src={getImageUrl(prediction.image_filename)}
+                        alt="Before treatment"
+                        style={{ width: "100%", height: "240px", objectFit: "cover", background: "#f8f9fa" }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* After Panel */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--color-success)", textTransform: "uppercase" }}>
+                      🟢 {t("After Treatment")}
+                    </span>
+                    <div style={{ overflow: "hidden", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)" }}>
+                      <img
+                        src={getImageUrl(prediction.after_image_filename)}
+                        alt="After treatment"
+                        style={{ width: "100%", height: "240px", objectFit: "cover", background: "#f8f9fa" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {prediction.after_notes && (
+                  <div style={{ marginTop: "1rem", background: "var(--color-bg-secondary)", padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--color-border-light)" }}>
+                    <strong style={{ fontSize: "0.8125rem", color: "var(--color-text-secondary)", display: "block" }}>
+                      📝 {t("Farmer Recovery Notes:")}
+                    </strong>
+                    <p style={{ fontSize: "0.875rem", color: "var(--color-text)", marginTop: "0.25rem", fontStyle: "italic" }}>
+                      &ldquo;{prediction.after_notes}&rdquo;
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="card" style={{ overflow: "hidden" }}>
+                <img
+                  src={getImageUrl(prediction.image_filename)}
+                  alt={`${prediction.crop_type} sample`}
+                  style={{
+                    width: "100%",
+                    maxHeight: "400px",
+                    objectFit: "contain",
+                    background: "#f8f9fa",
+                  }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </div>
+            )
           )}
 
           {/* Results Grid */}
@@ -302,6 +373,61 @@ export default function PredictionDetailPage() {
               <p style={{ color: "var(--color-text-secondary)", lineHeight: 1.7, fontStyle: "italic" }}>
                 &ldquo;{transNotes}&rdquo;
               </p>
+            </div>
+          )}
+
+          {/* Follow-up Recovery Uploader (Farmer Only) */}
+          {user.role === "FARMER" && prediction.farmer_id === user.id && !prediction.after_image_filename && (
+            <div className="card" style={{ padding: "1.5rem", border: "1px dashed var(--color-primary-light)", background: "rgba(76, 175, 80, 0.03)" }}>
+              <h3 style={{ fontWeight: 700, marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--color-primary-dark)" }}>
+                🌱 {t("Track Treatment Success")}
+              </h3>
+              <p style={{ fontSize: "0.8125rem", color: "var(--color-text-secondary)", marginBottom: "1rem" }}>
+                {t("Have you applied the recommended treatment? Upload a follow-up photo to track recovery progress and see before-vs-after status.")}
+              </p>
+
+              <form onSubmit={handleFollowupSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.875rem" }}>
+                {/* File Input */}
+                <div>
+                  <label className="label">{t("Follow-up Image")}</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setFollowupFile(e.target.files?.[0] || null)}
+                    className="input"
+                    required
+                    style={{ background: "white" }}
+                  />
+                </div>
+
+                {/* Observations */}
+                <div>
+                  <label className="label">{t("Recovery Observations")}</label>
+                  <textarea
+                    value={followupNotes}
+                    onChange={(e) => setFollowupNotes(e.target.value)}
+                    placeholder={t("Describe the crop health now (e.g., spots disappearing, new leaves sprouting, yellowing reduced)")}
+                    className="textarea"
+                    rows={3}
+                    style={{ background: "white" }}
+                  />
+                </div>
+
+                {followupError && (
+                  <div style={{ color: "var(--color-danger)", fontSize: "0.8125rem", fontWeight: 600 }}>
+                    ❌ {followupError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={followupLoading || !followupFile}
+                  className="btn btn-primary"
+                  style={{ alignSelf: "flex-start", marginTop: "0.5rem" }}
+                >
+                  🚀 {followupLoading ? t("Uploading...") : t("Update Recovery Status")}
+                </button>
+              </form>
             </div>
           )}
         </div>

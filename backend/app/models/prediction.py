@@ -94,6 +94,17 @@ class Prediction(Base):
         String(50), nullable=True, doc="Preferred language of the query"
     )
 
+    # Image Comparison / Follow-up Tracking
+    after_image_filename: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, doc="Stored filename of the follow-up image"
+    )
+    after_notes: Mapped[str | None] = mapped_column(
+        Text, nullable=True, doc="Observations after treatment"
+    )
+    after_uploaded_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=True, doc="Timestamp of follow-up image upload"
+    )
+
     # Comments relationship
     comments = relationship("Comment", back_populates="prediction", cascade="all, delete-orphan")
 

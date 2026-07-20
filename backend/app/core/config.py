@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@db:5432/krishiclinic"
 
-    # AI Provider: "mock" | "gemini" | "groq" | "openai"
+    # AI Provider: "mock" | "gemini" | "groq" | "openai" | "local"
     AI_PROVIDER: str = "mock"
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-3.1-flash-lite"

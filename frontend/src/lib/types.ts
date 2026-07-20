@@ -18,6 +18,12 @@ export interface Prediction {
   status?: string;
   ai_provider: string;
   created_at: string;
+
+  // Follow-up comparison fields
+  farmer_id?: string | null;
+  after_image_filename?: string | null;
+  after_notes?: string | null;
+  after_uploaded_at?: string | null;
 }
 
 export interface PredictionListItem {
@@ -86,5 +92,6 @@ export const AI_PROVIDERS = [
   { value: "", label: "Default (server config)" },
   { value: "gemini", label: "🤖 Google Gemini" },
   { value: "groq", label: "⚡ Groq (Llama 4)" },
+  { value: "local", label: "🧠 Local PyTorch (EfficientNetV2)" },
   { value: "mock", label: "🧪 Mock (deterministic)" },
 ] as const;

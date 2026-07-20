@@ -25,6 +25,7 @@ from app.ai.gemini_provider import GeminiProvider
 from app.ai.groq_provider import GroqProvider
 from app.ai.openai_provider import OpenAIProvider
 from app.ai.fallback_provider import FallbackAIProvider
+from app.ai.local_provider import LocalPyTorchProvider
 from app.storage.base import StorageProvider
 from app.storage.local_storage import LocalStorage
 
@@ -94,6 +95,9 @@ def _build_provider(provider_name: str) -> AIProvider:
         )
         return FallbackAIProvider(primary, MockProvider())
 
+    if provider_name == "local":
+        return LocalPyTorchProvider()
+
     # Default to mock — safe for development and CI
     return MockProvider()
 
@@ -111,7 +115,7 @@ def get_ai_provider_by_name(provider_name: str) -> AIProvider:
     Build a specific AI provider by name.
     Used when the frontend sends a per-request provider override.
     """
-    valid = {"mock", "gemini", "groq", "openai"}
+    valid = {"mock", "gemini", "groq", "openai", "local"}
     if provider_name not in valid:
         logger.warning(f"Unknown AI provider '{provider_name}', falling back to default.")
         return get_ai_provider()
