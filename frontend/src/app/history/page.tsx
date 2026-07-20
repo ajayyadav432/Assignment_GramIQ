@@ -254,6 +254,11 @@ export default function HistoryPage() {
                         day: "numeric",
                         month: "short",
                         year: "numeric",
+                      })}{" "}
+                      {new Date(item.created_at).toLocaleTimeString("en-IN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
                       })}
                     </td>
                     <td style={{ fontWeight: 600 }}><Translate text={item.crop_type} /></td>

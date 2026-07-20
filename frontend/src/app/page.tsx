@@ -569,7 +569,14 @@ export default function HomePage() {
                   {adminPredictions.map((item) => (
                     <tr key={item.id} style={{ borderBottom: "1px solid var(--color-border-light)" }}>
                       <td style={{ padding: "0.75rem", fontFamily: "monospace" }}>{item.id.slice(0, 8)}...</td>
-                      <td style={{ padding: "0.75rem" }}>{new Date(item.created_at).toLocaleDateString()}</td>
+                      <td style={{ padding: "0.75rem" }}>
+                        {new Date(item.created_at).toLocaleDateString("en-IN")}{" "}
+                        {new Date(item.created_at).toLocaleTimeString("en-IN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
+                      </td>
                       <td style={{ padding: "0.75rem" }}>{t(item.crop_type)}</td>
                       <td style={{ padding: "0.75rem", fontWeight: 600 }}>{item.predicted_disease}</td>
                       <td style={{ padding: "0.75rem" }}>

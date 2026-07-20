@@ -176,7 +176,7 @@ export default function AgronomistPortal() {
                         {pred.farmer_notes ? <Translate text={pred.farmer_notes} /> : <em>{t("No notes provided")}</em>}
                       </p>
                       <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", marginTop: "0.5rem" }}>
-                        ⏱️ {new Date(pred.created_at).toLocaleDateString("en-IN")}
+                        ⏱️ {new Date(pred.created_at).toLocaleDateString("en-IN")} {new Date(pred.created_at).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit', hour12: true })}
                       </div>
                     </div>
                   </div>
