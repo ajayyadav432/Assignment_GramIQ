@@ -145,12 +145,30 @@ class PredictionService:
         disease: str | None = None,
         farmer_id: uuid.UUID | None = None,
         status: str | None = None,
+        search: str | None = None,
     ) -> tuple[list[Prediction], int]:
         """
         Return paginated predictions with optional filtering.
+        Supports fuzzy multi-field search across disease, crop, notes, and location.
         """
+        from sqlalchemy import or_
+
         query = select(Prediction)
         count_query = select(func.count(Prediction.id))
+
+        # Fuzzy multi-field search — matches partial text across several columns
+        if search and search.strip():
+            term = f"%{search.strip()}%"
+            fuzzy_filter = or_(
+                Prediction.predicted_disease.ilike(term),
+                Prediction.crop_type.ilike(term),
+                Prediction.farmer_notes.ilike(term),
+                Prediction.location.ilike(term),
+                Prediction.recommendation.ilike(term),
+                Prediction.possible_reasons.ilike(term),
+            )
+            query = query.where(fuzzy_filter)
+            count_query = count_query.where(fuzzy_filter)
 
         # Apply filters
         if farmer_id:
@@ -323,6 +341,36 @@ class PredictionService:
             farmer_id=farmer_id,
             status="PENDING_REVIEW",
         )
+
+        self._db.add(prediction)
+        await self._db.commit()
+        await self._db.refresh(prediction)
+        return prediction
+
+    async def add_followup_image(
+        self,
+        prediction_id: uuid.UUID,
+        image_bytes: bytes,
+        image_filename: str,
+        after_notes: str | None = None,
+    ) -> Prediction:
+        """
+        Saves the follow-up crop recovery image and updates the prediction record.
+        """
+        result = await self._db.execute(
+            select(Prediction).where(Prediction.id == prediction_id)
+        )
+        prediction = result.scalar_one_or_none()
+        if not prediction:
+            raise ValueError("Prediction not found")
+
+        # Save follow-up image
+        stored_filename = await self._storage.save(image_filename, image_bytes)
+        
+        # Update fields
+        prediction.after_image_filename = stored_filename
+        prediction.after_notes = after_notes
+        prediction.after_uploaded_at = datetime.now()
 
         self._db.add(prediction)
         await self._db.commit()

@@ -51,7 +51,7 @@ export default function HomePage() {
         page,
         limit: 10,
         crop_type: selectedCrop || undefined,
-        disease: searchQuery || undefined,
+        search: searchQuery || undefined,
         status: selectedStatus || undefined,
       });
       
@@ -81,7 +81,7 @@ export default function HomePage() {
         page: adminPage,
         limit: 20,
         crop_type: adminCrop || undefined,
-        disease: adminSearch || undefined,
+        search: adminSearch || undefined,
       });
       setAdminPredictions(res.items);
       setAdminTotal(res.total);
@@ -240,7 +240,7 @@ export default function HomePage() {
               {/* Search */}
               <input
                 type="text"
-                placeholder={t("Search by disease...")}
+                placeholder={t("Search crop, disease, location...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{

@@ -93,6 +93,7 @@ export async function listPredictions(params?: {
   crop_type?: string;
   disease?: string;
   status?: string;
+  search?: string;
 }): Promise<PredictionListResponse> {
   const searchParams = new URLSearchParams();
   if (params?.page) searchParams.set("page", String(params.page));
@@ -100,6 +101,7 @@ export async function listPredictions(params?: {
   if (params?.crop_type) searchParams.set("crop_type", params.crop_type);
   if (params?.disease) searchParams.set("disease", params.disease);
   if (params?.status) searchParams.set("status", params.status);
+  if (params?.search) searchParams.set("search", params.search);
 
   const query = searchParams.toString();
   const url = `${API_URL}/api/v1/predictions${query ? `?${query}` : ""}`;
@@ -265,6 +267,25 @@ export async function voteComment(
     body: JSON.stringify({ vote_type: voteType }),
   });
   return handleResponse<CommentItem>(res);
+}
+
+export async function uploadFollowup(
+  predictionId: string,
+  imageFile: File,
+  afterNotes?: string
+): Promise<Prediction> {
+  const formData = new FormData();
+  formData.append("image", imageFile);
+  if (afterNotes) {
+    formData.append("after_notes", afterNotes);
+  }
+
+  const res = await fetch(`${API_URL}/api/v1/predictions/${predictionId}/followup`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: formData,
+  });
+  return handleResponse<Prediction>(res);
 }
 
 export { ApiError };

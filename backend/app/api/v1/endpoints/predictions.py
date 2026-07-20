@@ -309,6 +309,7 @@ async def list_predictions(
     crop_type: str = Query(None, description="Filter by crop type"),
     disease: str = Query(None, description="Filter by disease name"),
     status: str = Query(None, description="Filter by status (PENDING_REVIEW, REVIEWED)"),
+    search: str = Query(None, description="Fuzzy search across disease, crop, notes, location"),
     db: AsyncSession = Depends(get_db),
     ai_provider: AIProvider = Depends(get_ai_provider),
     storage: StorageProvider = Depends(get_storage_provider),
@@ -329,6 +330,7 @@ async def list_predictions(
         disease=disease,
         farmer_id=farmer_id,
         status=status,
+        search=search,
     )
 
     return PredictionListResponse(
@@ -422,3 +424,57 @@ async def review_prediction(
 
     logger.info(f"Agronomist {current_user.username} reviewed prediction {prediction_id}")
     return prediction
+
+
+@router.post(
+    "/predictions/{prediction_id}/followup",
+    response_model=PredictionResponse,
+    summary="Add Follow-up Image",
+    description="Upload an after-treatment crop recovery image to track progress.",
+)
+async def add_followup(
+    prediction_id: uuid.UUID,
+    image: UploadFile = File(..., description="Follow-up crop recovery image (JPEG, PNG, or WebP)"),
+    after_notes: str = Form(None, description="Observations after applying treatment"),
+    db: AsyncSession = Depends(get_db),
+    ai_provider: AIProvider = Depends(get_ai_provider),
+    storage: StorageProvider = Depends(get_storage_provider),
+    current_user: User = Depends(get_current_farmer),
+):
+    """
+    Upload a follow-up image for a crop to track recovery progress.
+    """
+    # 1. Fetch prediction
+    service = PredictionService(db, ai_provider, storage)
+    prediction = await service.get_prediction(prediction_id)
+    if not prediction:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "Not found",
+                "message": f"Prediction with ID {prediction_id} does not exist.",
+            },
+        )
+
+    # 2. Check ownership
+    if prediction.farmer_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "Forbidden",
+                "message": "You do not own this prediction record.",
+            },
+        )
+
+    # 3. Read and validate follow-up file
+    content = await image.read()
+    _validate_image(image, content)
+
+    # 4. Save follow-up
+    updated_pred = await service.add_followup_image(
+        prediction_id=prediction_id,
+        image_bytes=content,
+        image_filename=image.filename or "followup.jpg",
+        after_notes=after_notes,
+    )
+    return mask_prediction(updated_pred, current_user.role)
