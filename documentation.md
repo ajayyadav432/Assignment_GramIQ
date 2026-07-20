@@ -2,6 +2,11 @@
 
 ---
 
+### 🌐 Live Production Demo: **[frontend-woad-mu-58.vercel.app](https://frontend-woad-mu-58.vercel.app)**
+### 🎥 1-Minute Demo Video: **[YouTube Link](https://www.youtube.com/watch?v=qenq3j1mEhQ)**
+
+---
+
 ## 1. Executive Summary & Product Vision
 
 ### What is Krishi Clinic Lite?
