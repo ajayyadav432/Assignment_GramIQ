@@ -111,6 +111,9 @@ app.dependency_overrides[get_current_user] = override_get_current_user
 app.dependency_overrides[get_current_farmer] = override_get_current_farmer
 app.dependency_overrides[get_current_agronomist] = override_get_current_agronomist
 
+import app.core.database as db_mod
+db_mod.async_session_factory = TestingSessionLocal
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_database():
