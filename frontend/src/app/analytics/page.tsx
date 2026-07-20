@@ -18,6 +18,11 @@ const VolumeChart = dynamic(() => import("@/components/VolumeChart"), {
   loading: () => <div className="skeleton" style={{ height: "300px" }} />,
 });
 
+const HeatmapChart = dynamic(() => import("@/components/HeatmapChart"), {
+  ssr: false,
+  loading: () => <div className="skeleton" style={{ height: "340px" }} />,
+});
+
 function StatCard({
   label,
   value,
@@ -220,6 +225,14 @@ export default function AnalyticsPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Disease Outbreak Heatmap */}
+      <div className="card" style={{ padding: "1.5rem", marginBottom: "2rem" }}>
+        <h3 style={{ fontWeight: 600, marginBottom: "1rem", fontSize: "1rem" }}>
+          🗺️ {t("Disease Outbreak Heatmap (India)")}
+        </h3>
+        <HeatmapChart />
       </div>
 
       {/* Severity Breakdown */}
